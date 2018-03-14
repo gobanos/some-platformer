@@ -1,27 +1,32 @@
+extern crate flexi_logger;
 extern crate ggez;
-extern crate some_platformer;
 #[macro_use]
 extern crate log;
-extern crate flexi_logger;
+extern crate some_platformer;
 
-use std::{env, path};
+use flexi_logger::Logger;
 use ggez::{conf, event, graphics, Context, GameResult};
 use ggez::graphics::{Color, DrawMode, Rect};
-use flexi_logger::Logger;
+use some_platformer::entities::player::player::Player;
 use some_platformer::Map;
+use some_platformer::world::gameworld::GameWorld;
+use std::{env, path};
 
-struct MainState {
+struct MainState<'a, 'b> {
     map: Map,
+    world: GameWorld<'a, 'b>,
 }
 
-impl ggez::event::EventHandler for MainState {
+impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
+        self.world.update();
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx);
 
+        // TODO: Create a `TileRenderer` component, handle the map elsewhere :)
         // draw map
         graphics::set_color(ctx, Color::from_rgb(255, 0, 0))?;
         for (&(x, y), _) in &self.map.elements {
@@ -32,6 +37,10 @@ impl ggez::event::EventHandler for MainState {
                 Rect::new((x + 10) as f32 * 40.0, (14 - y) as f32 * 40.0, 40.0, 40.0),
             )?;
         }
+
+        // draws the RenderSystem
+        self.world.draw(ctx);
+
         graphics::present(ctx);
         Ok(())
     }
@@ -55,8 +64,15 @@ fn main() {
 
     info!("{}", graphics::get_renderer_info(ctx).unwrap());
 
+    let mut game_world: GameWorld = GameWorld::new();
+
+    // TODO: Remove player being instantiated here ...
+    let mut player: Player = Player::new();
+    game_world.add_game_entity(&mut player);
+
     let state = &mut MainState {
         map: some_platformer::Map::default(),
+        world: game_world,
     };
 
     event::run(ctx, state).unwrap();
