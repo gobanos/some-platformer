@@ -3,6 +3,9 @@ extern crate ggez;
 #[macro_use]
 extern crate log;
 extern crate some_platformer;
+extern crate tokio;
+#[macro_use]
+extern crate futures;
 
 use flexi_logger::Logger;
 use ggez::{conf, event, graphics, Context, GameResult};
@@ -12,10 +15,21 @@ use some_platformer::Map;
 use some_platformer::world::gameworld::GameWorld;
 use std::{env, path};
 
+use std::thread;
+use std::sync::mpsc;
+
+use tokio::io;
+use tokio::net::TcpStream;
+use tokio::prelude::*;
+
+type SyncToGame = i32;
+type GameToSync = i32;
+
 struct MainState<'a, 'b> {
     map: Map,
     world: GameWorld<'a, 'b>,
 }
+
 
 impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
@@ -70,10 +84,25 @@ fn main() {
     let mut player: Player = Player::new();
     game_world.add_game_entity(&mut player);
 
+    let (sync_sender, game_receiver) = mpsc::channel();
+    let (game_sender, sync_receiver) = mpsc::channel();
+    thread::spawn(move || sync(sync_sender, sync_receiver));
+
     let state = &mut MainState {
         map: some_platformer::Map::default(),
         world: game_world,
     };
 
     event::run(ctx, state).unwrap();
+}
+
+fn sync(sender: mpsc::Sender<SyncToGame>, receiver: mpsc::Receiver<GameToSync>) {
+    let addr = "127.0.0.1:3000".parse().unwrap();
+
+    let stream = TcpStream::connect(&addr).then(|_stream| {
+        // TODO: communicate with server !
+        Ok(())
+    });
+
+    tokio::run(stream);
 }
