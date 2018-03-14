@@ -2,7 +2,7 @@ use components::moving::{GravityAffected, Moving};
 use components::transform::Transform;
 use nalgebra::Vector2;
 use resources::delta_time::DeltaTime;
-use specs::{Fetch, Join, ReadStorage, System, SystemData, WriteStorage};
+use specs::{Fetch, Join, ReadStorage, System, WriteStorage};
 
 // A system updating the transform of a moving entity
 pub struct SysMoving {}

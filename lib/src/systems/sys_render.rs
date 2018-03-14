@@ -22,7 +22,7 @@ impl<'a, 'c> System<'a> for SysRender<'c> {
         // Displays all the rect_drawable
         for (trans, r_draw) in (&transform, &rect_drawable).join() {
             // TODO: Actually display the drawable to the context
-            r_draw.draw(self.ctx, trans);
+            r_draw.draw(self.ctx, trans).unwrap();
         }
 
         // TODO: Display all the drawable

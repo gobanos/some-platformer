@@ -3,7 +3,6 @@ use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
 use ggez::Context;
-use ggez::graphics::{clear, present};
 use resources::delta_time::DeltaTime;
 use specs::{Dispatcher, DispatcherBuilder, RunNow, World};
 use systems::sys_moving::{SysMoving, SysMovingGravity};
