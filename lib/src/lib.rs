@@ -1,8 +1,9 @@
-// TODO: Handle the ggez import in a better way. Server shouldn't need the ggez dependency!
+// RE-EXPORTS
+pub extern crate nalgebra;
+pub extern crate specs;
+pub extern crate time;
+
 extern crate ggez;
-extern crate nalgebra;
-extern crate specs;
-extern crate time;
 
 use std::collections::HashMap;
 

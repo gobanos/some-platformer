@@ -1,0 +1,16 @@
+[package]
+name = "some_platformer_lib"
+version = "0.1.0"
+authors = ["Grégory OBANOS <gregory.obanos@gmail.com>"]
+
+[dependencies]
+specs = "*"
+nalgebra = "*"
+time = "*"
+
+
+tokio = "*"
+futures = "*"
+
+# TODO: Move to client only
+ggez = "*"

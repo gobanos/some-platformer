@@ -1,4 +1,4 @@
-extern crate some_platformer;
+extern crate some_platformer_lib;
 extern crate tokio;
 #[macro_use]
 extern crate futures;

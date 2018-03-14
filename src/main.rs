@@ -2,7 +2,7 @@ extern crate flexi_logger;
 extern crate ggez;
 #[macro_use]
 extern crate log;
-extern crate some_platformer;
+extern crate some_platformer_lib;
 extern crate tokio;
 #[macro_use]
 extern crate futures;
@@ -10,9 +10,9 @@ extern crate futures;
 use flexi_logger::Logger;
 use ggez::{conf, event, graphics, Context, GameResult};
 use ggez::graphics::{Color, DrawMode, Rect};
-use some_platformer::entities::player::player::Player;
-use some_platformer::Map;
-use some_platformer::world::gameworld::GameWorld;
+use some_platformer_lib::entities::player::player::Player;
+use some_platformer_lib::Map;
+use some_platformer_lib::world::gameworld::GameWorld;
 use std::{env, path};
 
 use std::thread;
@@ -89,7 +89,7 @@ fn main() {
     thread::spawn(move || sync(sync_sender, sync_receiver));
 
     let state = &mut MainState {
-        map: some_platformer::Map::default(),
+        map: some_platformer_lib::Map::default(),
         world: game_world,
     };
 
