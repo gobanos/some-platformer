@@ -1,7 +1,7 @@
+extern crate flexi_logger;
+extern crate futures;
 extern crate some_platformer_lib;
 extern crate tokio;
-extern crate futures;
-extern crate flexi_logger;
 #[macro_use]
 extern crate log;
 
@@ -29,7 +29,8 @@ fn main() {
                     debug!("wrote message; success={:?}", res.is_ok());
                     let (socket, _) = res.unwrap();
                     Ok(socket)
-                }).map(|_| ());
+                })
+                .map(|_| ());
 
             tokio::spawn(connection);
 

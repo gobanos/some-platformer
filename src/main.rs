@@ -2,9 +2,9 @@ extern crate flexi_logger;
 extern crate ggez;
 #[macro_use]
 extern crate log;
+extern crate futures;
 extern crate some_platformer_lib;
 extern crate tokio;
-extern crate futures;
 
 use flexi_logger::Logger;
 use ggez::{conf, event, graphics, Context, GameResult};
@@ -27,7 +27,6 @@ struct MainState<'a, 'b> {
     map: Map,
     world: GameWorld<'a, 'b>,
 }
-
 
 impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {

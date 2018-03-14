@@ -20,7 +20,7 @@ impl RectDrawable {
 
     // Draws the RectDrawable to the context
     // TODO: Actually draw something on the context
-    pub fn draw(&self, ctx: &mut Context, tr: &Transform) -> GameResult<()>{
+    pub fn draw(&self, ctx: &mut Context, tr: &Transform) -> GameResult<()> {
         set_color(ctx, self.color)?;
         rectangle(ctx, DrawMode::Fill, tr.as_rect())
     }
