@@ -7,3 +7,5 @@ authors = ["Gregory Obanos <gregory.obanos@gmail.com>"]
 ggez = "*"
 log = "*"
 flexi_logger = "*"
+tokio = "*"
+futures = "*"
