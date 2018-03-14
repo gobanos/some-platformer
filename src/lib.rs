@@ -2,12 +2,15 @@
 extern crate ggez;
 extern crate nalgebra;
 extern crate specs;
+extern crate time;
 
 use std::collections::HashMap;
 
 pub mod world;
 pub mod entities;
 pub mod components;
+pub mod systems;
+pub mod resources;
 
 // TODO: move this out of lib.rs
 const DEBUG_MAP: &[(i32, i32)] = &[
