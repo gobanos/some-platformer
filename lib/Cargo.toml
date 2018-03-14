@@ -7,10 +7,11 @@ authors = ["Grégory OBANOS <gregory.obanos@gmail.com>"]
 specs = "*"
 nalgebra = "*"
 time = "*"
-
-
 tokio = "*"
 futures = "*"
+
+log = "*"
+flexi_logger = "*"
 
 # TODO: Move to client only
 ggez = "*"

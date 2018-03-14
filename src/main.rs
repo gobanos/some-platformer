@@ -4,7 +4,6 @@ extern crate ggez;
 extern crate log;
 extern crate some_platformer_lib;
 extern crate tokio;
-#[macro_use]
 extern crate futures;
 
 use flexi_logger::Logger;
@@ -18,7 +17,6 @@ use std::{env, path};
 use std::thread;
 use std::sync::mpsc;
 
-use tokio::io;
 use tokio::net::TcpStream;
 use tokio::prelude::*;
 
@@ -84,8 +82,8 @@ fn main() {
     let mut player: Player = Player::new();
     game_world.add_game_entity(&mut player);
 
-    let (sync_sender, game_receiver) = mpsc::channel();
-    let (game_sender, sync_receiver) = mpsc::channel();
+    let (sync_sender, _game_receiver) = mpsc::channel();
+    let (_game_sender, sync_receiver) = mpsc::channel();
     thread::spawn(move || sync(sync_sender, sync_receiver));
 
     let state = &mut MainState {
@@ -96,7 +94,7 @@ fn main() {
     event::run(ctx, state).unwrap();
 }
 
-fn sync(sender: mpsc::Sender<SyncToGame>, receiver: mpsc::Receiver<GameToSync>) {
+fn sync(_sender: mpsc::Sender<SyncToGame>, _receiver: mpsc::Receiver<GameToSync>) {
     let addr = "127.0.0.1:3000".parse().unwrap();
 
     let stream = TcpStream::connect(&addr).then(|_stream| {
