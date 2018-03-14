@@ -7,20 +7,18 @@ use nalgebra::Point2;
 use specs::{Entity, World};
 
 pub struct Player {
-	entity: Option<Entity>,
+    entity: Option<Entity>,
 }
 
 impl Player {
-	pub fn new() -> Self {
-		Player {
-			entity: None,
-		}
-	}
+    pub fn new() -> Self {
+        Player { entity: None }
+    }
 }
 
 impl GameEntity for Player {
-	fn add_to_world(&mut self, world: &mut World) {
-		let entity: Entity = world
+    fn add_to_world(&mut self, world: &mut World) {
+        let entity: Entity = world
 			.create_entity()
 			// TODO: remove Hardcoded position
 			.with(Transform::new(
@@ -33,6 +31,6 @@ impl GameEntity for Player {
 			.with(GravityAffected::new())
 			.build();
 
-		self.entity = Some(entity);
-	}
+        self.entity = Some(entity);
+    }
 }
