@@ -1,15 +1,15 @@
 [package]
-name = "some_platformer_lib"
+name = "some_platformer_server"
 version = "0.1.0"
 authors = ["Grégory OBANOS <gregory.obanos@gmail.com>"]
 
 [dependencies]
-specs = "*"
-nalgebra = "*"
-time = "*"
+tokio = "*"
+tokio-io = "*"
+futures = "*"
+bytes = "*"
 
 log = "*"
 flexi_logger = "*"
 
-# TODO: Move to client only
-ggez = "*"
+some_platformer_lib = { path = "../lib" }

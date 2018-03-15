@@ -1,5 +1,5 @@
 [package]
-name = "some_platformer"
+name = "some_platformer_client"
 version = "0.1.0"
 authors = ["Gregory Obanos <gregory.obanos@gmail.com>", "Olivier Pinon <oliv.pinon@gmail.com"]
 
@@ -10,6 +10,4 @@ flexi_logger = "*"
 tokio = "*"
 futures = "*"
 
-some_platformer_lib = { path = "lib" }
-
-[workspace]
+some_platformer_lib = { path = "../lib" }

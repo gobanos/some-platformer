@@ -1,9 +1,9 @@
 extern crate flexi_logger;
 #[macro_use]
 extern crate futures;
+extern crate bytes;
 extern crate some_platformer_lib;
 extern crate tokio;
-extern crate bytes;
 #[macro_use]
 extern crate log;
 

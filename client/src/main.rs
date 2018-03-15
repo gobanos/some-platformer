@@ -96,10 +96,15 @@ fn main() {
 fn sync(_sender: mpsc::Sender<SyncToGame>, _receiver: mpsc::Receiver<GameToSync>) {
     let addr = "127.0.0.1:3000".parse().unwrap();
 
-    let stream = TcpStream::connect(&addr).then(|_stream| {
-        // TODO: communicate with server !
-        Ok(())
-    });
+    // Simulate connections with server
+    loop {
+        let stream = TcpStream::connect(&addr).then(|_stream| {
+            // TODO: communicate with server !
+            Ok(())
+        });
 
-    tokio::run(stream);
+        tokio::run(stream);
+
+        thread::sleep_ms(10000);
+    }
 }
