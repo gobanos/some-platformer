@@ -1,20 +1,18 @@
 extern crate flexi_logger;
-#[macro_use]
-extern crate futures;
-extern crate bytes;
 extern crate some_platformer_lib;
-extern crate tokio;
 #[macro_use]
 extern crate log;
+
+use some_platformer_lib::{bytes, futures, tokio};
+use some_platformer_lib::sync::codec::Lines;
 
 use tokio::io;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::prelude::*;
 
 use futures::sync::mpsc;
-use futures::future::{self, Either};
 
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::{BufMut, Bytes};
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -44,110 +42,8 @@ impl Shared {
     }
 }
 
-/// The codec allowing framed communication
-struct Lines {
-    socket: TcpStream,
-    rd: BytesMut,
-    wr: BytesMut,
-}
-
-impl Lines {
-    /// Create a new `Lines` codec backed by the socket
-    fn new(socket: TcpStream) -> Self {
-        Lines {
-            socket,
-            rd: BytesMut::new(),
-            wr: BytesMut::new(),
-        }
-    }
-
-    fn fill_read_buf(&mut self) -> Poll<(), io::Error> {
-        loop {
-            // Ensure the read buffer has capacity
-            //
-            // This might result in an internal allocation.
-            self.rd.reserve(1024);
-
-            // Read data into the buffer.
-            //
-            // The `read_buf` fn is provided by `AsyncRead`?
-            let n = try_ready!(self.socket.read_buf(&mut self.rd));
-
-            if n == 0 {
-                return Ok(Async::Ready(()));
-            }
-        }
-    }
-
-    fn buffer(&mut self, line: &[u8]) {
-        // Push the line onto the end of the write buffer?
-        //
-        // The `put` function if from the `BufMut` trait.
-        self.wr.put(line);
-    }
-
-    fn poll_flush(&mut self) -> Poll<(), io::Error> {
-        // As long as there is buffered data to write, try to write it.
-        while !self.wr.is_empty() {
-            // Try to write some bytes from the socket
-            let n = try_ready!(self.socket.poll_write(&self.wr));
-
-            // As long as the wr is not empty, a successful write should
-            // never write 0 bytes.
-            assert!(n > 0);
-
-            // This discards the first `n` bytes of the buffer?
-            let _ = self.wr.split_to(n);
-        }
-
-        Ok(Async::Ready(()))
-    }
-}
-
-impl Stream for Lines {
-    type Item = BytesMut;
-    type Error = io::Error;
-
-    fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
-        // First, read any new data that might have been received
-        // off the socket
-        //
-        // We track if the socket is closed here and will be used
-        // to inform the return value below.
-        let sock_closed = self.fill_read_buf()?.is_ready();
-
-        // Now, try finding lines
-        let pos = self.rd
-            .windows(2)
-            .enumerate()
-            .find(|&(_, bytes)| bytes == b"\r\n")
-            .map(|(i, _)| i);
-
-        if let Some(pos) = pos {
-            // Remove the line form the read buffer and set it
-            // to `line`.
-            let mut line = self.rd.split_to(pos + 2);
-
-            // Drop the trailing \r\n
-            line.split_off(pos);
-
-            // Return the line
-            return Ok(Async::Ready(Some(line)));
-        }
-
-        if sock_closed {
-            Ok(Async::Ready(None))
-        } else {
-            Ok(Async::NotReady)
-        }
-    }
-}
-
 /// A future that processes the broadcast logic for a connection
 struct Peer {
-    /// Name of the peer. This is the first line received from the client.
-    name: BytesMut,
-
     /// The TCP socket wrapped with the `Lines` codec.
     lines: Lines,
 
@@ -169,9 +65,9 @@ struct Peer {
 }
 
 impl Peer {
-    fn new(name: BytesMut, state: SharedHandle, lines: Lines) -> Self {
+    fn new(state: SharedHandle, lines: Lines) -> Self {
         // Get the client socket address
-        let addr = lines.socket.peer_addr().unwrap();
+        let addr = lines.peer_addr().unwrap();
 
         // Create a channel for this peer
         let (tx, rx) = mpsc::unbounded();
@@ -180,7 +76,6 @@ impl Peer {
         state.lock().unwrap().peers.insert(addr, tx);
 
         Peer {
-            name,
             lines,
             state,
             rx,
@@ -216,13 +111,11 @@ impl Future for Peer {
 
         // Read new lines from the socket
         while let Async::Ready(line) = self.lines.poll()? {
-            println!("Received line ({:?}) : {:?}", self.name, line);
+            println!("Received line {:?}", line);
 
             if let Some(message) = line {
                 // Append the peer's name to the front of the line:
-                let mut line = self.name.clone();
-                line.put(": ");
-                line.put(&message);
+                let mut line = message.clone();
                 line.put("\r\n");
 
                 // We're using `Bytes`, which allows zero-copy clones
@@ -234,15 +127,12 @@ impl Future for Peer {
                 let line = line.freeze();
 
                 // Now, send the line to all other peers
-                for (addr, tx) in &self.state.lock().unwrap().peers {
-                    // Son't send the message to ourselves
-                    if *addr != self.addr {
-                        // The send only fails if the rx half has been
-                        // dropped, however this is impossible as the
-                        // `tx` half will be removed from the map
-                        // before the `rx` is dropped.
-                        tx.unbounded_send(line.clone()).unwrap();
-                    }
+                for (_addr, tx) in &self.state.lock().unwrap().peers {
+                    // The send only fails if the rx half has been
+                    // dropped, however this is impossible as the
+                    // `tx` half will be removed from the map
+                    // before the `rx` is dropped.
+                    tx.unbounded_send(line.clone()).unwrap();
                 }
             } else {
                 // EOF was reached. The remote client has disconnected.
@@ -301,59 +191,11 @@ fn process(socket: TcpStream, state: Arc<Mutex<Shared>>) {
     // Wrap the socket with the `Lines` codec that we wrote above
     let lines = Lines::new(socket);
 
-    // The first line is treated as the client's name. The client
-    // is not added to the set of connected peers until the line
-    // is received.
-    //
-    // We use the `into_future` combinator to extract the first
-    // item from the lines steam. `into_future` takes a `Steam`
-    // and converts it to a future of `(first, rest)` where `rest`
-    // is the original stream instance.
-    let connection = lines.into_future()
-        // `into_future` doesn't have the tight error type, so map
-        // the error to make it work.
-        .map_err(|(e, _)| e)
-        // Process the first received line as the client's name.
-        .and_then(|(name, lines)| {
-            // If `name` is `None`, then the client disconnected without
-            // actually sending a line of data.
-            //
-            // Since the connection is closed, there is no futher work
-            // that we need to do. So, we just terminate processing by
-            // returning `future::ok()`.
-            //
-            // The problem is that only a single future type can be
-            // returned from a combinator closure, but we want to
-            // return both `future::ok()` and `Peer` (below).
-            //
-            // This is a common problem, so the `futures` crate solves
-            // this by providing the `Either` helper enum that allows
-            // creating a single return type that covers two concrete
-            // future types.
-            let name = match name {
-                Some(name) => name,
-                None => {
-                    return Either::A(future::ok(()));
-                }
-            };
-
-            println!("`{:?}` is joining the chat", name);
-
-            // Create the peer
-            //
-            // This is also a future that processes the connection, only
-            // completing when the socket closes.
-            let peer = Peer::new(name, state, lines);
-
-            // Wrap `peer` with `Either::B` to make the return type fit.
-            Either::B(peer)
-        })
-        // Task futures have an error of type `()`, this ensures we handle
-        // the error. We do this by printing the error to STDOUT.
-        .map_err(|e| {
-            println!("connection error = {:?}", e);
-        });
+    let peer = Peer::new(state, lines).map_err(|err| {
+        println!("error: {:?}", err);
+        ()
+    });
 
     // Spawn the task
-    tokio::spawn(connection);
+    tokio::spawn(peer);
 }

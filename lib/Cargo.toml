@@ -11,5 +11,10 @@ time = "*"
 log = "*"
 flexi_logger = "*"
 
+tokio = "*"
+tokio-io = "*"
+futures = "*"
+bytes = "*"
+
 # TODO: Move to client only
 ggez = "*"

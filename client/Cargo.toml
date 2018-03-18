@@ -7,7 +7,5 @@ authors = ["Gregory Obanos <gregory.obanos@gmail.com>", "Olivier Pinon <oliv.pin
 ggez = "*"
 log = "*"
 flexi_logger = "*"
-tokio = "*"
-futures = "*"
 
 some_platformer_lib = { path = "../lib" }

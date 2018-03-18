@@ -2,9 +2,10 @@ extern crate flexi_logger;
 extern crate ggez;
 #[macro_use]
 extern crate log;
-extern crate futures;
 extern crate some_platformer_lib;
-extern crate tokio;
+
+use some_platformer_lib::{bytes, futures, tokio};
+use some_platformer_lib::sync::codec::Lines;
 
 use flexi_logger::Logger;
 use ggez::{conf, event, graphics, Context, GameResult};
@@ -14,22 +15,45 @@ use some_platformer_lib::Map;
 use some_platformer_lib::world::gameworld::GameWorld;
 use std::{env, path};
 
+use ggez::event::{Keycode, Mod};
+
+use tokio::io;
+
+use bytes::{BufMut, Bytes};
 use std::thread;
-use std::sync::mpsc;
+
+use futures::sync::mpsc as ampsc;
+use std::sync::mpsc as smpsc;
 
 use tokio::net::TcpStream;
 use tokio::prelude::*;
 
-type SyncToGame = i32;
-type GameToSync = i32;
+/// Shorthand for the transmit half of the message channel
+type ATx = ampsc::UnboundedSender<Bytes>;
+
+/// Shorthand for the receive half of the message channel
+type ARx = ampsc::UnboundedReceiver<Bytes>;
+
+/// Shorthand for the transmit half of the message channel
+type STx = smpsc::Sender<Bytes>;
+
+/// Shorthand for the receive half of the message channel
+type SRx = smpsc::Receiver<Bytes>;
 
 struct MainState<'a, 'b> {
     map: Map,
     world: GameWorld<'a, 'b>,
+    tx: ATx,
+    rx: SRx,
 }
 
 impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
+        // Poll sync messages
+        while let Ok(msg) = self.rx.try_recv() {
+            println!("game got message {:?}", msg);
+        }
+
         self.world.update();
         Ok(())
     }
@@ -54,6 +78,91 @@ impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
 
         graphics::present(ctx);
         Ok(())
+    }
+
+    /// A keyboard button was pressed.
+    fn key_down_event(&mut self, ctx: &mut Context, keycode: Keycode, _keymod: Mod, _repeat: bool) {
+        match keycode {
+            Keycode::Escape => ctx.quit().expect("Should never fail"),
+            Keycode::Return => self.tx.unbounded_send(Bytes::from("SPAWN\r\n")).unwrap(),
+            _ => (),
+        }
+    }
+}
+
+/// A future that processes the broadcast logic for a connection
+struct Peer {
+    /// The TCP socket wrapped with the `Lines` codec.
+    lines: Lines,
+
+    /// Send half of the message channel
+    ///
+    /// This is used to send messages to game.
+    tx: STx,
+
+    /// Receive half of the message channel
+    ///
+    /// This is used to received messages from game. When a message is received
+    /// off of this `ARx`, it will be written to the socket.
+    rx: ARx,
+}
+
+impl Peer {
+    fn new(lines: Lines, tx: STx, rx: ARx) -> Self {
+        Peer { lines, tx, rx }
+    }
+}
+
+impl Future for Peer {
+    type Item = ();
+    type Error = io::Error;
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        // Receive all messages from peers.
+
+        // Polling an `UnboundedReceiver` cannot fail, so `unwrap`
+        // here is safe.
+        while let Async::Ready(Some(v)) = self.rx.poll().unwrap() {
+            // Buffer the line. Once all lines are buffered,
+            // they will be flushed to the socket (right
+            // below).
+            self.lines.buffer(&v);
+        }
+
+        // Flush the write buffer to the socket
+        let _ = self.lines.poll_flush()?;
+
+        // Read new lines from the socket
+        while let Async::Ready(line) = self.lines.poll()? {
+            println!("Received line {:?}", line);
+
+            if let Some(message) = line {
+                // Append the peer's name to the front of the line:
+                let mut line = message.clone();
+                line.put("\r\n");
+
+                // We're using `Bytes`, which allows zero-copy clones
+                // (by storing the data in an Arc internally)?
+                //
+                // However, before cloning, we must freeze the data.
+                // This converts it from mutable -> immutable?
+                // allowing zero-copy cloning?
+                let line = line.freeze();
+
+                self.tx.send(line).unwrap();
+            } else {
+                // EOF was reached. The remote client has disconnected.
+                // There is nothing more to do.
+                return Ok(Async::Ready(()));
+            }
+        }
+
+        // As always, it is important to not just return `NotReady`
+        // without ensuring an inner future also returned `NotReady`.
+        //
+        // We know we got a `NotReady` from either `self.rx` or
+        // `self.lines`, so the contract is respected.
+        Ok(Async::NotReady)
     }
 }
 
@@ -81,30 +190,47 @@ fn main() {
     let mut player: Player = Player::new();
     game_world.add_game_entity(&mut player);
 
-    let (sync_sender, _game_receiver) = mpsc::channel();
-    let (_game_sender, sync_receiver) = mpsc::channel();
+    // sync to game uses sync channel
+    let (sync_sender, game_receiver) = smpsc::channel();
+
+    // game to sync uses async channel
+    let (game_sender, sync_receiver) = ampsc::unbounded();
+
     thread::spawn(move || sync(sync_sender, sync_receiver));
 
     let state = &mut MainState {
         map: some_platformer_lib::Map::default(),
         world: game_world,
+        tx: game_sender,
+        rx: game_receiver,
     };
 
     event::run(ctx, state).unwrap();
 }
 
-fn sync(_sender: mpsc::Sender<SyncToGame>, _receiver: mpsc::Receiver<GameToSync>) {
+fn sync(sender: STx, receiver: ARx) {
     let addr = "127.0.0.1:3000".parse().unwrap();
 
-    // Simulate connections with server
-    loop {
-        let stream = TcpStream::connect(&addr).then(|_stream| {
-            // TODO: communicate with server !
-            Ok(())
-        });
+    let stream = TcpStream::connect(&addr).then(|stream| {
+        match stream {
+            Ok(socket) => process(socket, sender, receiver),
+            Err(err) => error!("failed to connect to server: {:?}", err),
+        }
+        Ok(())
+    });
 
-        tokio::run(stream);
+    tokio::run(stream);
+}
 
-        thread::sleep_ms(10000);
-    }
+fn process(socket: TcpStream, tx: STx, rx: ARx) {
+    // Wrap the socket with the `Lines` codec that we wrote above
+    let lines = Lines::new(socket);
+
+    let connection = Peer::new(lines, tx, rx).map_err(|err| {
+        error!("failed to read line: {:?}", err);
+        ()
+    });
+
+    // Spawn the task
+    tokio::spawn(connection);
 }

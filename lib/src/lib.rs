@@ -2,6 +2,10 @@
 pub extern crate nalgebra;
 pub extern crate specs;
 pub extern crate time;
+#[macro_use]
+pub extern crate futures;
+pub extern crate bytes;
+pub extern crate tokio;
 
 extern crate ggez;
 
@@ -12,6 +16,7 @@ pub mod entities;
 pub mod components;
 pub mod systems;
 pub mod resources;
+pub mod sync;
 
 // TODO: move this out of lib.rs
 const DEBUG_MAP: &[(i32, i32)] = &[
