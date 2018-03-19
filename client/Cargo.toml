@@ -1,5 +1,5 @@
 [package]
-name = "some_platformer"
+name = "some_platformer_client"
 version = "0.1.0"
 authors = ["Gregory Obanos <gregory.obanos@gmail.com>", "Olivier Pinon <oliv.pinon@gmail.com"]
 
@@ -7,6 +7,5 @@ authors = ["Gregory Obanos <gregory.obanos@gmail.com>", "Olivier Pinon <oliv.pin
 ggez = "*"
 log = "*"
 flexi_logger = "*"
-specs = "*"
-nalgebra = "*"
-time = "*"
+
+some_platformer_lib = { path = "../lib" }

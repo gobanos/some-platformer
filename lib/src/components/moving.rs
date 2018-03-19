@@ -1,5 +1,5 @@
 use nalgebra::Translation2;
-use specs::{Component, Join, VecStorage};
+use specs::{Component, VecStorage};
 
 /// A component that allows an entity to move
 pub struct Moving {
