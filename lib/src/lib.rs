@@ -7,6 +7,12 @@ pub extern crate futures;
 pub extern crate bytes;
 pub extern crate tokio;
 
+#[macro_use]
+extern crate serde_derive;
+
+extern crate serde;
+extern crate serde_json;
+
 extern crate ggez;
 
 use std::collections::HashMap;

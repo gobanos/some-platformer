@@ -4,7 +4,7 @@ extern crate ggez;
 extern crate log;
 extern crate some_platformer_lib;
 
-use some_platformer_lib::{bytes, futures, tokio};
+use some_platformer_lib::{futures, tokio};
 use some_platformer_lib::sync::codec::Lines;
 
 use flexi_logger::Logger;
@@ -15,11 +15,12 @@ use some_platformer_lib::Map;
 use some_platformer_lib::world::gameworld::GameWorld;
 use std::{env, path};
 
+use some_platformer_lib::sync::message;
+
 use ggez::event::{Keycode, Mod};
 
 use tokio::io;
 
-use bytes::{BufMut, Bytes};
 use std::thread;
 
 use futures::sync::mpsc as ampsc;
@@ -28,17 +29,19 @@ use std::sync::mpsc as smpsc;
 use tokio::net::TcpStream;
 use tokio::prelude::*;
 
-/// Shorthand for the transmit half of the message channel
-type ATx = ampsc::UnboundedSender<Bytes>;
+/// Shorthand for the transmit half of the game2sync channel
+type ATx = ampsc::UnboundedSender<message::Client>;
 
-/// Shorthand for the receive half of the message channel
-type ARx = ampsc::UnboundedReceiver<Bytes>;
+/// Shorthand for the receive half of the game2sync channel
+type ARx = ampsc::UnboundedReceiver<message::Client>;
 
-/// Shorthand for the transmit half of the message channel
-type STx = smpsc::Sender<Bytes>;
+/// Shorthand for the transmit half of the sync2game channel
+type STx = smpsc::Sender<message::Server>;
 
-/// Shorthand for the receive half of the message channel
-type SRx = smpsc::Receiver<Bytes>;
+/// Shorthand for the receive half of the sync2game channel
+type SRx = smpsc::Receiver<message::Server>;
+
+type Codec = Lines<message::Client, message::Server>;
 
 struct MainState<'a, 'b> {
     map: Map,
@@ -64,7 +67,7 @@ impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
         // TODO: Create a `TileRenderer` component, handle the map elsewhere :)
         // draw map
         graphics::set_color(ctx, Color::from_rgb(255, 0, 0))?;
-        for (&(x, y), _) in &self.map.elements {
+        for &(x, y) in self.map.elements.keys() {
             graphics::rectangle(
                 ctx,
                 DrawMode::Fill,
@@ -84,7 +87,7 @@ impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
     fn key_down_event(&mut self, ctx: &mut Context, keycode: Keycode, _keymod: Mod, _repeat: bool) {
         match keycode {
             Keycode::Escape => ctx.quit().expect("Should never fail"),
-            Keycode::Return => self.tx.unbounded_send(Bytes::from("SPAWN\r\n")).unwrap(),
+            Keycode::Return => self.tx.unbounded_send(message::Client::Test).unwrap(),
             _ => (),
         }
     }
@@ -93,7 +96,7 @@ impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
 /// A future that processes the broadcast logic for a connection
 struct Peer {
     /// The TCP socket wrapped with the `Lines` codec.
-    lines: Lines,
+    lines: Codec,
 
     /// Send half of the message channel
     ///
@@ -108,7 +111,7 @@ struct Peer {
 }
 
 impl Peer {
-    fn new(lines: Lines, tx: STx, rx: ARx) -> Self {
+    fn new(lines: Codec, tx: STx, rx: ARx) -> Self {
         Peer { lines, tx, rx }
     }
 }
@@ -126,7 +129,7 @@ impl Future for Peer {
             // Buffer the line. Once all lines are buffered,
             // they will be flushed to the socket (right
             // below).
-            self.lines.buffer(&v);
+            self.lines.buffer(&v)?;
         }
 
         // Flush the write buffer to the socket
@@ -137,19 +140,7 @@ impl Future for Peer {
             println!("Received line {:?}", line);
 
             if let Some(message) = line {
-                // Append the peer's name to the front of the line:
-                let mut line = message.clone();
-                line.put("\r\n");
-
-                // We're using `Bytes`, which allows zero-copy clones
-                // (by storing the data in an Arc internally)?
-                //
-                // However, before cloning, we must freeze the data.
-                // This converts it from mutable -> immutable?
-                // allowing zero-copy cloning?
-                let line = line.freeze();
-
-                self.tx.send(line).unwrap();
+                self.tx.send(message).unwrap();
             } else {
                 // EOF was reached. The remote client has disconnected.
                 // There is nothing more to do.
@@ -224,7 +215,7 @@ fn sync(sender: STx, receiver: ARx) {
 
 fn process(socket: TcpStream, tx: STx, rx: ARx) {
     // Wrap the socket with the `Lines` codec that we wrote above
-    let lines = Lines::new(socket);
+    let lines = Codec::new(socket);
 
     let connection = Peer::new(lines, tx, rx).map_err(|err| {
         error!("failed to read line: {:?}", err);

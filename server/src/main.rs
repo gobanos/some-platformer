@@ -3,16 +3,15 @@ extern crate some_platformer_lib;
 #[macro_use]
 extern crate log;
 
-use some_platformer_lib::{bytes, futures, tokio};
+use some_platformer_lib::{futures, tokio};
 use some_platformer_lib::sync::codec::Lines;
+use some_platformer_lib::sync::message;
 
 use tokio::io;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::prelude::*;
 
 use futures::sync::mpsc;
-
-use bytes::{BufMut, Bytes};
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -21,13 +20,15 @@ use std::sync::{Arc, Mutex};
 use flexi_logger::Logger;
 
 /// Shorthand for the transmit half of the message channel
-type Tx = mpsc::UnboundedSender<Bytes>;
+type Tx = mpsc::UnboundedSender<message::Server>;
 
 /// Shorthand for the receive half of the message channel
-type Rx = mpsc::UnboundedReceiver<Bytes>;
+type Rx = mpsc::UnboundedReceiver<message::Server>;
 
 /// Shorthand for the shared handle to the state
 type SharedHandle = Arc<Mutex<Shared>>;
+
+type Codec = Lines<message::Server, message::Client>;
 
 /// The shared state, to allow task to communicate together
 struct Shared {
@@ -45,7 +46,7 @@ impl Shared {
 /// A future that processes the broadcast logic for a connection
 struct Peer {
     /// The TCP socket wrapped with the `Lines` codec.
-    lines: Lines,
+    lines: Codec,
 
     /// Handle to the shared chat state.
     state: SharedHandle,
@@ -65,7 +66,7 @@ struct Peer {
 }
 
 impl Peer {
-    fn new(state: SharedHandle, lines: Lines) -> Self {
+    fn new(state: SharedHandle, lines: Codec) -> Self {
         // Get the client socket address
         let addr = lines.peer_addr().unwrap();
 
@@ -103,7 +104,7 @@ impl Future for Peer {
             // Buffer the line. Once all lines are buffered,
             // they will be flushed to the socket (right
             // below).
-            self.lines.buffer(&v);
+            self.lines.buffer(&v)?;
         }
 
         // Flush the write buffer to the socket
@@ -114,25 +115,19 @@ impl Future for Peer {
             println!("Received line {:?}", line);
 
             if let Some(message) = line {
-                // Append the peer's name to the front of the line:
-                let mut line = message.clone();
-                line.put("\r\n");
-
-                // We're using `Bytes`, which allows zero-copy clones
-                // (by storing the data in an Arc internally)?
-                //
-                // However, before cloning, we must freeze the data.
-                // This converts it from mutable -> immutable?
-                // allowing zero-copy cloning?
-                let line = line.freeze();
+                // TODO: send message to server world,
+                // then server world dispatch messages to all clients.
+                let message = match message {
+                    message::Client::Test => message::Server::Test,
+                };
 
                 // Now, send the line to all other peers
-                for (_addr, tx) in &self.state.lock().unwrap().peers {
+                for tx in self.state.lock().unwrap().peers.values() {
                     // The send only fails if the rx half has been
                     // dropped, however this is impossible as the
                     // `tx` half will be removed from the map
                     // before the `rx` is dropped.
-                    tx.unbounded_send(line.clone()).unwrap();
+                    tx.unbounded_send(message.clone()).unwrap();
                 }
             } else {
                 // EOF was reached. The remote client has disconnected.
@@ -189,7 +184,7 @@ fn main() {
 /// Builds a new task for the incoming stream
 fn process(socket: TcpStream, state: Arc<Mutex<Shared>>) {
     // Wrap the socket with the `Lines` codec that we wrote above
-    let lines = Lines::new(socket);
+    let lines = Codec::new(socket);
 
     let peer = Peer::new(state, lines).map_err(|err| {
         println!("error: {:?}", err);

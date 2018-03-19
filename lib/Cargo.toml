@@ -16,5 +16,9 @@ tokio-io = "*"
 futures = "*"
 bytes = "*"
 
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
+
 # TODO: Move to client only
 ggez = "*"
