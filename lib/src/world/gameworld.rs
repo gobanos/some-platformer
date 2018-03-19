@@ -34,10 +34,10 @@ impl<'a, 'b> GameWorld<'a, 'b> {
 
         // Creates the dispatcher, registering the systems
         let logic_dispatcher: Dispatcher = DispatcherBuilder::new()
-			.add(sys_moving_gravity, "sys_moving_gravity", &[])
-			// TODO: Add sys_moving_collision
-			.add(sys_moving, "sys_moving", &["sys_moving_gravity"])
-			.build();
+            .add(sys_moving_gravity, "sys_moving_gravity", &[])
+            // TODO: Add sys_moving_collision
+            .add(sys_moving, "sys_moving", &["sys_moving_gravity"])
+            .build();
 
         // Creates the actual GameWorld
         GameWorld {

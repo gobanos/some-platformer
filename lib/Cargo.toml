@@ -6,6 +6,8 @@ authors = ["Grégory OBANOS <gregory.obanos@gmail.com>"]
 [dependencies]
 specs = "*"
 nalgebra = "*"
+ncollide = "*"
+
 time = "*"
 
 log = "*"
