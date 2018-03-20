@@ -1,6 +1,5 @@
 extern crate specs;
 
-use components::transform::Transform;
 use specs::Component;
 use specs::VecStorage;
 

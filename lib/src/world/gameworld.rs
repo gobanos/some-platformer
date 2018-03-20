@@ -3,7 +3,7 @@ use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
 use resources::delta_time::DeltaTime;
-use specs::{Dispatcher, DispatcherBuilder, RunNow, World};
+use specs::{Dispatcher, DispatcherBuilder, World};
 use systems::sys_moving::{SysMoving, SysMovingGravity};
 
 // The basic struct of the game. Contains everything to simulate an instance of the game.
