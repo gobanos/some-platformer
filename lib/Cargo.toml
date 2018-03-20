@@ -1,7 +1,8 @@
 [package]
 name = "some_platformer_lib"
 version = "0.1.0"
-authors = ["Grégory OBANOS <gregory.obanos@gmail.com>"]
+authors = ["Grégory OBANOS <gregory.obanos@gmail.com>",
+            "Olivier PINON <oliv.pinon@gmail.com"]
 
 [dependencies]
 specs = "*"
