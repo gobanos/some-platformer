@@ -146,7 +146,7 @@ impl Future for Peer {
 }
 
 fn main() {
-    Logger::with_env_or_str("some_platformer_lib=warn;server=warn")
+    Logger::with_env_or_str("some_platformer_lib=warn,some_platformer_server=warn")
         .start()
         .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
 
