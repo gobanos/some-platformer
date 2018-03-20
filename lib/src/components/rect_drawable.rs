@@ -16,14 +16,6 @@ impl RectDrawable {
     pub fn new(color: Color) -> Self {
         RectDrawable { color }
     }
-
-    // Draws the RectDrawable to the context
-    // TODO: Actually draw something on the context
-    // TODO: Move to client
-//    pub fn draw(&self, ctx: &mut Context, tr: &Transform) -> GameResult<()> {
-//        set_color(ctx, self.color)?;
-//        rectangle(ctx, DrawMode::Fill, tr.as_rect())
-//    }
 }
 
 impl Component for RectDrawable {
