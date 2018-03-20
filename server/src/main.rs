@@ -13,6 +13,8 @@ use tokio::prelude::*;
 
 use futures::sync::mpsc;
 
+use std::time::SystemTime;
+
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -118,6 +120,10 @@ impl Future for Peer {
                 // TODO: send message to server world,
                 // then server world dispatch messages to all clients.
                 let message = match message {
+                    message::Client::Ping(t) => message::Server::Pong {
+                        client: t,
+                        server: SystemTime::now(),
+                    },
                     message::Client::Test => message::Server::Test,
                 };
 

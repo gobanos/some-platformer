@@ -9,7 +9,6 @@ nalgebra = "*"
 time = "*"
 
 log = "*"
-flexi_logger = "*"
 
 tokio = "*"
 tokio-io = "*"

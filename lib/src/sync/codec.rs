@@ -40,6 +40,14 @@ impl<S: Serialize, D: DeserializeOwned> Lines<S, D> {
 
     pub fn buffer(&mut self, data: &S) -> Result<(), serde_json::Error> {
         let data = serde_json::to_vec(data)?;
+
+        debug!("buffering {} bytes", data.len());
+
+        let len = data.len() + 2; // message + \r\n
+        if len > self.wr.remaining_mut() {
+            self.wr.reserve(len);
+        }
+
         // Push the line onto the end of the write buffer?
         //
         // The `put` function if from the `BufMut` trait.

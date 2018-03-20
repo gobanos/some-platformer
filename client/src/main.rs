@@ -26,6 +26,8 @@ use std::thread;
 use futures::sync::mpsc as ampsc;
 use std::sync::mpsc as smpsc;
 
+use std::time::SystemTime;
+
 use tokio::net::TcpStream;
 use tokio::prelude::*;
 
@@ -54,7 +56,7 @@ impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
     fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
         // Poll sync messages
         while let Ok(msg) = self.rx.try_recv() {
-            println!("game got message {:?}", msg);
+            debug!("game got message {:?}", msg);
         }
 
         self.world.update();
@@ -88,6 +90,7 @@ impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
         match keycode {
             Keycode::Escape => ctx.quit().expect("Should never fail"),
             Keycode::Return => self.tx.unbounded_send(message::Client::Test).unwrap(),
+            Keycode::Space => self.tx.unbounded_send(message::Client::Ping(SystemTime::now())).unwrap(),
             _ => (),
         }
     }
@@ -140,7 +143,19 @@ impl Future for Peer {
             println!("Received line {:?}", line);
 
             if let Some(message) = line {
-                self.tx.send(message).unwrap();
+                if let message::Server::Pong { client, server } = message {
+                    let now = SystemTime::now();
+                    let client2server = server.duration_since(client).unwrap().subsec_nanos() as f32 / 1_000_000.0;
+                    let server2client = now.duration_since(server).unwrap().subsec_nanos() as f32 / 1_000_000.0;
+                    let client2client = now.duration_since(client).unwrap().subsec_nanos() as f32 / 1_000_000.0;
+
+                    debug!("SYNC:");
+                    debug!("\t- CLIENT -> SERVER : {:0.2}ms", client2server);
+                    debug!("\t- SERVER -> CLIENT : {:0.2}ms", server2client);
+                    debug!("\t- CLIENT -> SERVER -> CLIENT : {:0.2}ms", client2client);
+                } else {
+                    self.tx.send(message).unwrap();
+                }
             } else {
                 // EOF was reached. The remote client has disconnected.
                 // There is nothing more to do.
