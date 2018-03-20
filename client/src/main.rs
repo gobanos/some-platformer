@@ -12,7 +12,6 @@ use ggez::{conf, event, graphics, Context, GameResult};
 use ggez::graphics::{Color, DrawMode, Rect};
 use some_platformer_lib::entities::player::player::Player;
 use some_platformer_lib::Map;
-use some_platformer_lib::world::gameworld::GameWorld;
 use std::{env, path};
 
 use some_platformer_lib::sync::message;
@@ -30,6 +29,12 @@ use std::time::SystemTime;
 
 use tokio::net::TcpStream;
 use tokio::prelude::*;
+
+mod gameworld;
+use gameworld::GameWorld;
+
+mod sys_render;
+mod drawable;
 
 /// Shorthand for the transmit half of the game2sync channel
 type ATx = ampsc::UnboundedSender<message::Client>;

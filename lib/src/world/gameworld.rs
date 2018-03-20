@@ -2,16 +2,14 @@ use components::moving::{GravityAffected, Moving};
 use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
-use ggez::Context;
 use resources::delta_time::DeltaTime;
 use specs::{Dispatcher, DispatcherBuilder, RunNow, World};
 use systems::sys_moving::{SysMoving, SysMovingGravity};
-use systems::sys_render::SysRender;
 
 // The basic struct of the game. Contains everything to simulate an instance of the game.
 pub struct GameWorld<'a, 'b> {
     // SPECS's world
-    entity_world: World,
+    pub entity_world: World,
     // The dispatcher that contains all the logic systems of the game
     logic_dispatcher: Dispatcher<'a, 'b>,
 }
@@ -57,17 +55,18 @@ impl<'a, 'b> GameWorld<'a, 'b> {
     }
 
     // Ticks the game world
-    pub fn draw(&mut self, ctx: &mut Context) {
-        // Creates the drawing dispatcher if we're not launching the game in headless mode
-        // FIXME: Handle this better ? There has to be a way to avoid re-creating every loop
-
-        //clear(ctx);
-        {
-            let mut render_system: SysRender = SysRender::new(ctx);
-            render_system.run_now(&self.entity_world.res);
-        }
-        //present(ctx);
-    }
+    // TODO: move to client
+//    pub fn draw(&mut self, ctx: &mut Context) {
+//        // Creates the drawing dispatcher if we're not launching the game in headless mode
+//        // FIXME: Handle this better ? There has to be a way to avoid re-creating every loop
+//
+//        //clear(ctx);
+//        {
+//            let mut render_system: SysRender = SysRender::new(ctx);
+//            render_system.run_now(&self.entity_world.res);
+//        }
+//        //present(ctx);
+//    }
 
     pub fn add_game_entity<T: GameEntity>(&mut self, entity: &mut T) {
         entity.add_to_world(&mut self.entity_world);

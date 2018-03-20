@@ -1,15 +1,15 @@
 extern crate specs;
 
 use components::transform::Transform;
-use ggez::{Context, GameResult};
-use ggez::graphics::{rectangle, set_color, Color, DrawMode};
 use specs::Component;
 use specs::VecStorage;
+
+use types::Color;
 
 // A RectDrawable component allows an entity to be drawn as a rectangle to the screen. This is
 // convenient for quick debugging and prototype implementation of something.
 pub struct RectDrawable {
-    color: Color,
+    pub color: Color,
 }
 
 impl RectDrawable {
@@ -20,10 +20,11 @@ impl RectDrawable {
 
     // Draws the RectDrawable to the context
     // TODO: Actually draw something on the context
-    pub fn draw(&self, ctx: &mut Context, tr: &Transform) -> GameResult<()> {
-        set_color(ctx, self.color)?;
-        rectangle(ctx, DrawMode::Fill, tr.as_rect())
-    }
+    // TODO: Move to client
+//    pub fn draw(&self, ctx: &mut Context, tr: &Transform) -> GameResult<()> {
+//        set_color(ctx, self.color)?;
+//        rectangle(ctx, DrawMode::Fill, tr.as_rect())
+//    }
 }
 
 impl Component for RectDrawable {

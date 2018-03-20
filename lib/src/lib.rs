@@ -16,8 +16,6 @@ extern crate serde_json;
 #[macro_use]
 extern crate log;
 
-extern crate ggez;
-
 use std::collections::HashMap;
 
 pub mod world;
@@ -26,6 +24,7 @@ pub mod components;
 pub mod systems;
 pub mod resources;
 pub mod sync;
+pub mod types;
 
 // TODO: move this out of lib.rs
 const DEBUG_MAP: &[(i32, i32)] = &[

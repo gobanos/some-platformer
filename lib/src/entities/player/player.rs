@@ -2,9 +2,10 @@ use components::moving::{GravityAffected, Moving};
 use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
-use ggez::graphics::Color;
 use nalgebra::Point2;
 use specs::{Entity, World};
+
+use types::Color;
 
 pub struct Player {
     entity: Option<Entity>,

@@ -1,6 +1,6 @@
-use ggez::graphics::Rect;
 use nalgebra::Point2;
 use specs::{Component, VecStorage};
+use types::Rect;
 
 // Component that handles the position/size/rotation of a game entity
 pub struct Transform {
