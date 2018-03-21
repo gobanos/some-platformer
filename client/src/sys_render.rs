@@ -5,7 +5,6 @@ use some_platformer_lib::specs::{Join, ReadStorage, System};
 use ggez::Context;
 use drawable::Drawable;
 
-// TODO: Move to client
 // The SysRender system draws all the RectDrawables with their Transforms on the screen
 pub struct SysRender<'c> {
     ctx: &'c mut Context,
