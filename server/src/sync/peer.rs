@@ -9,8 +9,7 @@ use tokio::io;
 use tokio::prelude::*;
 
 use super::shared::SharedHandle;
-use super::Rx;
-use super::Codec;
+use super::{Codec, Rx};
 
 /// A future that processes the broadcast logic for a connection
 pub struct Peer {

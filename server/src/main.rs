@@ -25,7 +25,7 @@ fn main() {
 
     let state = Arc::new(Mutex::new(Shared::new()));
 
-    let addr = "127.0.0.1:3000".parse().unwrap();
+    let addr = "0.0.0.0:3000".parse().unwrap();
     let listener = TcpListener::bind(&addr).unwrap();
 
     let server = listener
@@ -41,7 +41,7 @@ fn main() {
             debug!("accept error = {:?}", err);
         });
 
-    info!("server running on localhost:3000");
+    info!("server running on port 3000");
 
     // Start the server
     //
