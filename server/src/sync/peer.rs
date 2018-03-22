@@ -84,7 +84,7 @@ impl Future for Peer {
 
         // Read new lines from the socket
         while let Async::Ready(line) = self.lines.poll()? {
-            println!("Received line {:?}", line);
+            debug!("Received line {:?}", line);
 
             if let Some(message) = line {
                 if let Client::Ping(t) = message {

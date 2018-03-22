@@ -145,7 +145,7 @@ impl Future for Peer {
 
         // Read new lines from the socket
         while let Async::Ready(line) = self.lines.poll()? {
-            println!("Received line {:?}", line);
+            debug!("Received line {:?}", line);
 
             if let Some(message) = line {
                 if let message::Server::Pong { client, server } = message {
@@ -178,7 +178,7 @@ impl Future for Peer {
 }
 
 fn main() {
-    Logger::with_env_or_str("some_platformer_lib=warn,some_platformer_client=warn")
+    Logger::with_env_or_str("some_platformer_lib=debug,some_platformer_client=debug")
         .start()
         .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
 

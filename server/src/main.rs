@@ -25,7 +25,7 @@ use lib::tokio::prelude::*;
 use flexi_logger::Logger;
 
 fn main() {
-    Logger::with_env_or_str("some_platformer_lib=warn,some_platformer_server=warn")
+    Logger::with_env_or_str("some_platformer_lib=debug,some_platformer_server=debug")
         .start()
         .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
 
@@ -71,7 +71,7 @@ fn process(socket: TcpStream, state: SharedHandle, sender: CTx) {
     let lines = Codec::new(socket);
 
     let peer = Peer::new(state, sender, lines).map_err(|err| {
-        println!("error: {:?}", err);
+        error!("error: {:?}", err);
         ()
     });
 
