@@ -1,15 +1,15 @@
-use some_platformer_lib::sync::message::{Client, Server};
+use lib::sync::message::{Client, Server};
 
 use std::time::SystemTime;
 use std::net::SocketAddr;
 
-use futures::sync::mpsc;
+use lib::futures::sync::mpsc;
 
-use tokio::io;
-use tokio::prelude::*;
+use lib::tokio::io;
+use lib::tokio::prelude::*;
 
 use super::shared::SharedHandle;
-use super::{Codec, Rx};
+use super::{CTx, Codec, Rx};
 
 /// A future that processes the broadcast logic for a connection
 pub struct Peer {
@@ -18,6 +18,9 @@ pub struct Peer {
 
     /// Handle to the shared chat state.
     state: SharedHandle,
+
+    /// Transmission halt of the game channel
+    game: CTx,
 
     /// Receive half of the message channel
     ///
@@ -34,7 +37,7 @@ pub struct Peer {
 }
 
 impl Peer {
-    pub fn new(state: SharedHandle, lines: Codec) -> Self {
+    pub fn new(state: SharedHandle, game: CTx, lines: Codec) -> Self {
         // Get the client socket address
         let addr = lines.peer_addr().unwrap();
 
@@ -47,6 +50,7 @@ impl Peer {
         Peer {
             lines,
             state,
+            game,
             rx,
             addr,
         }
@@ -83,23 +87,17 @@ impl Future for Peer {
             println!("Received line {:?}", line);
 
             if let Some(message) = line {
-                // TODO: send message to server world,
-                // then server world dispatch messages to all clients.
-                let message = match message {
-                    Client::Ping(t) => Server::Pong {
+                if let Client::Ping(t) = message {
+                    let response = Server::Pong {
                         client: t,
                         server: SystemTime::now(),
-                    },
-                    Client::Test => Server::Test,
-                };
+                    };
 
-                // Now, send the line to all other peers
-                for tx in self.state.lock().unwrap().peers.values() {
-                    // The send only fails if the rx half has been
-                    // dropped, however this is impossible as the
-                    // `tx` half will be removed from the map
-                    // before the `rx` is dropped.
-                    tx.unbounded_send(message.clone()).unwrap();
+                    self.state.lock().unwrap().peers[&self.addr]
+                        .unbounded_send(response)
+                        .unwrap();
+                } else {
+                    self.game.send((message, self.addr)).unwrap();
                 }
             } else {
                 // EOF was reached. The remote client has disconnected.
