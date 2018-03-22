@@ -1,6 +1,6 @@
-use some_platformer_lib::components::rect_drawable::RectDrawable;
-use some_platformer_lib::components::transform::Transform;
-use some_platformer_lib::specs::{Join, ReadStorage, System};
+use lib::components::rect_drawable::RectDrawable;
+use lib::components::transform::Transform;
+use lib::specs::{Join, ReadStorage, System};
 
 use ggez::Context;
 use drawable::Drawable;

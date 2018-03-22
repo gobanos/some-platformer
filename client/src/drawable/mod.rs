@@ -1,6 +1,6 @@
 use ggez::{Context, GameResult};
 
-use some_platformer_lib::components::transform::Transform;
+use lib::components::transform::Transform;
 
 mod rect_drawable;
 

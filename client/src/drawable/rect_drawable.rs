@@ -1,6 +1,6 @@
 use super::Drawable;
-use some_platformer_lib::components::rect_drawable::RectDrawable;
-use some_platformer_lib::components::transform::Transform;
+use lib::components::rect_drawable::RectDrawable;
+use lib::components::transform::Transform;
 
 use some_platformer_lib::types;
 

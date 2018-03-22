@@ -1,5 +1,5 @@
-use some_platformer_lib::world::gameworld::GameWorld as GW;
-use some_platformer_lib::specs::RunNow;
+use lib::world::gameworld::GameWorld as GW;
+use lib::specs::RunNow;
 use ggez::Context;
 use sys_render::SysRender;
 

@@ -2,33 +2,33 @@ extern crate flexi_logger;
 extern crate ggez;
 #[macro_use]
 extern crate log;
-extern crate some_platformer_lib;
+pub extern crate some_platformer_lib;
 
-use some_platformer_lib::{futures, tokio};
-use some_platformer_lib::sync::codec::Lines;
+pub use some_platformer_lib as lib;
+use lib::sync::codec::Lines;
 
 use flexi_logger::Logger;
 use ggez::{conf, event, graphics, Context, GameResult};
 use ggez::graphics::{Color, DrawMode, Rect};
-use some_platformer_lib::entities::player::player::Player;
-use some_platformer_lib::Map;
+use lib::entities::player::player::Player;
+use lib::Map;
 use std::{env, path};
 
-use some_platformer_lib::sync::message;
+use lib::sync::message;
 
 use ggez::event::{Keycode, Mod};
 
-use tokio::io;
+use lib::tokio::io;
 
 use std::thread;
 
-use futures::sync::mpsc as ampsc;
+use lib::futures::sync::mpsc as ampsc;
 use std::sync::mpsc as smpsc;
 
 use std::time::SystemTime;
 
-use tokio::net::TcpStream;
-use tokio::prelude::*;
+use lib::tokio::net::TcpStream;
+use lib::tokio::prelude::*;
 
 mod gameworld;
 use gameworld::GameWorld;
@@ -210,7 +210,7 @@ fn main() {
     thread::spawn(move || sync(sync_sender, sync_receiver));
 
     let state = &mut MainState {
-        map: some_platformer_lib::Map::default(),
+        map: lib::Map::default(),
         world: game_world,
         tx: game_sender,
         rx: game_receiver,
@@ -230,7 +230,7 @@ fn sync(sender: STx, receiver: ARx) {
         Ok(())
     });
 
-    tokio::run(stream);
+    lib::tokio::run(stream);
 }
 
 fn process(socket: TcpStream, tx: STx, rx: ARx) {
@@ -243,5 +243,5 @@ fn process(socket: TcpStream, tx: STx, rx: ARx) {
     });
 
     // Spawn the task
-    tokio::spawn(connection);
+    lib::tokio::spawn(connection);
 }
