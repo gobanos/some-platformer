@@ -1,17 +1,17 @@
 use std::time::Duration;
 
 use sync::CRx;
-use sync::shared::SharedHandle;
+use sync::state::StateHandle;
 
 use lib::sync::message::{Client, Server};
 
 pub struct Game {
-    state: SharedHandle,
+    state: StateHandle,
     receiver: CRx,
 }
 
 impl Game {
-    pub fn new(receiver: CRx, state: SharedHandle) -> Self {
+    pub fn new(receiver: CRx, state: StateHandle) -> Self {
         Game { state, receiver }
     }
 

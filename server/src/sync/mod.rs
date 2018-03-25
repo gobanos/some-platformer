@@ -1,5 +1,5 @@
 pub mod peer;
-pub mod shared;
+pub mod state;
 
 use lib::sync::message::{Client, Server};
 use lib::sync::codec::Lines;

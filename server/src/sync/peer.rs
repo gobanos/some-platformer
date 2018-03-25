@@ -8,7 +8,7 @@ use lib::futures::sync::mpsc;
 use lib::tokio::io;
 use lib::tokio::prelude::*;
 
-use super::shared::SharedHandle;
+use super::state::StateHandle;
 use super::{CTx, Codec, Rx};
 
 /// A future that processes the broadcast logic for a connection
@@ -17,7 +17,7 @@ pub struct Peer {
     lines: Codec,
 
     /// Handle to the shared chat state.
-    state: SharedHandle,
+    state: StateHandle,
 
     /// Transmission halt of the game channel
     game: CTx,
@@ -37,7 +37,7 @@ pub struct Peer {
 }
 
 impl Peer {
-    pub fn new(state: SharedHandle, game: CTx, lines: Codec) -> Self {
+    pub fn new(state: StateHandle, game: CTx, lines: Codec) -> Self {
         // Get the client socket address
         let addr = lines.peer_addr().unwrap();
 
