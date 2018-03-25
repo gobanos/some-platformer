@@ -9,7 +9,7 @@ use lib::tokio::io;
 use lib::tokio::prelude::*;
 
 use super::state::StateHandle;
-use super::{CTx, Codec, Rx};
+use super::{C2GSender, Codec, G2CReceiver};
 
 /// A future that processes the broadcast logic for a connection
 pub struct Peer {
@@ -20,13 +20,13 @@ pub struct Peer {
     state: StateHandle,
 
     /// Transmission halt of the game channel
-    game: CTx,
+    game: C2GSender,
 
     /// Receive half of the message channel
     ///
     /// This is used to received messages from peers. When a message is received
     /// off of this `Rx`, it will be written to the socket.
-    rx: Rx,
+    rx: G2CReceiver,
 
     /// Client socket address.
     ///
@@ -37,7 +37,7 @@ pub struct Peer {
 }
 
 impl Peer {
-    pub fn new(state: StateHandle, game: CTx, lines: Codec) -> Self {
+    pub fn new(state: StateHandle, game: C2GSender, lines: Codec) -> Self {
         // Get the client socket address
         let addr = lines.peer_addr().unwrap();
 

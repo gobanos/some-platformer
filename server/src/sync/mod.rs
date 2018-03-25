@@ -1,21 +1,22 @@
 pub mod peer;
 pub mod state;
 
-use lib::sync::message::{Client, Server};
-use lib::sync::codec::Lines;
-
 use std::sync::mpsc::{Receiver, Sender};
 use std::net::SocketAddr;
 
+use lib::sync::message::{Client, Server};
+use lib::sync::codec::Lines;
+
 use lib::futures::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-/// Shorthand for the transmit half of the message channel
-pub type Tx = UnboundedSender<Server>;
+// SHORTHANDS
+/// game -> client channel
+pub type G2CSender = UnboundedSender<Server>;
+pub type G2CReceiver = UnboundedReceiver<Server>;
 
-/// Shorthand for the receive half of the message channel
-pub type Rx = UnboundedReceiver<Server>;
+// client -> game channel
+pub type C2GSender = Sender<(Client, SocketAddr)>;
+pub type C2GReceiver = Receiver<(Client, SocketAddr)>;
 
-pub type CTx = Sender<(Client, SocketAddr)>;
-pub type CRx = Receiver<(Client, SocketAddr)>;
-
+// server `Lines` codec
 pub type Codec = Lines<Server, Client>;

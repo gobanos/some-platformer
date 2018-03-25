@@ -5,7 +5,7 @@ extern crate flexi_logger;
 extern crate log;
 
 mod sync;
-use sync::{CTx, Codec};
+use sync::{C2GSender, Codec};
 use sync::peer::Peer;
 use sync::state::{State, StateHandle};
 
@@ -36,8 +36,8 @@ fn main() {
     let (sender, receiver) = mpsc::channel();
 
     // Make the game and spawn it to a new (dedicated) thread
-    let game = Game::new(receiver, state.clone());
-    thread::spawn(|| game_loop(game));
+    let game_state = state.clone();
+    thread::spawn(|| game_loop(Game::new(receiver, game_state)));
 
     // Open a TCP listener on port 3000, allowing all connections
     let addr = "0.0.0.0:3000".parse().expect("invalid addr");
@@ -75,7 +75,7 @@ fn main() {
 /// Builds a new task for the incoming stream
 /// the task will live until client disconnect
 /// and will handle/forward client messages
-fn spawn_peer(socket: TcpStream, state: StateHandle, sender: CTx) {
+fn spawn_peer(socket: TcpStream, state: StateHandle, sender: C2GSender) {
     // Wrap the socket with the `Lines` codec
     // which will encode/decode message for and from the client
     let lines = Codec::new(socket);
@@ -91,6 +91,7 @@ fn spawn_peer(socket: TcpStream, state: StateHandle, sender: CTx) {
 }
 
 /// Run the game loop
+/// TODO: move to fixed time update
 fn game_loop(mut game: Game) {
     // The `maximum` duration for a frame
     let frame_budget = Duration::new(1, 0) / 60;
