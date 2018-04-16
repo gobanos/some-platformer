@@ -7,31 +7,51 @@ use specs::{Entity, World};
 
 use types::Color;
 
+pub struct PlayerEntity(Entity);
+
 pub struct Player {
-    entity: Option<Entity>,
+	position: Point2<f32>,
+	size: Point2<f32>,
+	color: Color,
+}
+
+impl Default for Player {
+	fn default() -> Self {
+        Player {
+            position: Point2::new(200.0, 100.0),
+            size: Point2::new(32.0, 32.0),
+            color: Color::new(0.0, 1.0, 0.0, 1.0),
+        }
+	}
 }
 
 impl Player {
-    pub fn new() -> Self {
-        Player { entity: None }
-    }
+	pub fn new(position: Point2<f32>, size: Point2<f32>, color: Color) -> Self {
+		Player {
+			position,
+			size,
+			color,
+		}
+	}
 }
 
 impl GameEntity for Player {
-    fn add_to_world(&mut self, world: &mut World) {
-        let entity: Entity = world
-			.create_entity()
-			// TODO: remove Hardcoded position
-			.with(Transform::new(
-				Point2::new(100., 100.),
-				Point2::new(32., 32.),
-				0.,
-			))
-			.with(RectDrawable::new(Color::new(0., 1., 0., 1.)))
-			.with(Moving::new())
-			.with(GravityAffected::new())
-			.build();
+    type Entity = PlayerEntity;
 
-        self.entity = Some(entity);
+    fn add_to_world(self, world: &mut World) -> Self::Entity {
+        let entity: Entity = world
+            .create_entity()
+            // TODO: remove Hardcoded position
+            .with(Transform::new(
+                self.position,
+                self.size,
+                0.,
+            ))
+            .with(RectDrawable::new(self.color))
+            .with(Moving::new())
+            .with(GravityAffected::new())
+            .build();
+
+        PlayerEntity(entity)
     }
 }

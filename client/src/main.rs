@@ -197,9 +197,7 @@ fn main() {
 
     let mut game_world: GameWorld = GameWorld::new();
 
-    // TODO: Remove player being instantiated here ...
-    let mut player: Player = Player::new();
-    game_world.add_game_entity(&mut player);
+    game_world.add_game_entity(Player::default());
 
     // sync to game uses sync channel
     let (sync_sender, game_receiver) = smpsc::channel();

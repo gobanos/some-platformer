@@ -1,4 +1,6 @@
 
-/target/
+/lib/target/
+/client/target/
+/server/target/
 **/*.rs.bk
 /.idea/*

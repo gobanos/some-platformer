@@ -54,21 +54,7 @@ impl<'a, 'b> GameWorld<'a, 'b> {
         self.logic_dispatcher.dispatch(&self.entity_world.res);
     }
 
-    // Ticks the game world
-    // TODO: move to client
-//    pub fn draw(&mut self, ctx: &mut Context) {
-//        // Creates the drawing dispatcher if we're not launching the game in headless mode
-//        // FIXME: Handle this better ? There has to be a way to avoid re-creating every loop
-//
-//        //clear(ctx);
-//        {
-//            let mut render_system: SysRender = SysRender::new(ctx);
-//            render_system.run_now(&self.entity_world.res);
-//        }
-//        //present(ctx);
-//    }
-
-    pub fn add_game_entity<T: GameEntity>(&mut self, entity: &mut T) {
+    pub fn add_game_entity<T: GameEntity>(&mut self, entity: T) {
         entity.add_to_world(&mut self.entity_world);
     }
 }
