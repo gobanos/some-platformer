@@ -95,7 +95,9 @@ impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
         match keycode {
             Keycode::Escape => ctx.quit().expect("Should never fail"),
             Keycode::Return => self.tx.unbounded_send(message::Client::Test).unwrap(),
-            Keycode::Space => self.tx.unbounded_send(message::Client::Ping(SystemTime::now())).unwrap(),
+            Keycode::Space => self.tx
+                .unbounded_send(message::Client::Ping(SystemTime::now()))
+                .unwrap(),
             _ => (),
         }
     }
@@ -150,9 +152,12 @@ impl Future for Peer {
             if let Some(message) = line {
                 if let message::Server::Pong { client, server } = message {
                     let now = SystemTime::now();
-                    let client2server = server.duration_since(client).unwrap().subsec_nanos() as f32 / 1_000_000.0;
-                    let server2client = now.duration_since(server).unwrap().subsec_nanos() as f32 / 1_000_000.0;
-                    let client2client = now.duration_since(client).unwrap().subsec_nanos() as f32 / 1_000_000.0;
+                    let client2server =
+                        server.duration_since(client).unwrap().subsec_nanos() as f32 / 1_000_000.0;
+                    let server2client =
+                        now.duration_since(server).unwrap().subsec_nanos() as f32 / 1_000_000.0;
+                    let client2client =
+                        now.duration_since(client).unwrap().subsec_nanos() as f32 / 1_000_000.0;
 
                     debug!("SYNC:");
                     debug!("\t- CLIENT -> SERVER : {:0.2}ms", client2server);

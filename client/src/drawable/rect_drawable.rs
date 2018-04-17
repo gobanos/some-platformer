@@ -5,7 +5,7 @@ use lib::components::transform::Transform;
 use some_platformer_lib::types;
 
 use ggez::{Context, GameResult};
-use ggez::graphics::{set_color, rectangle, DrawMode, Color, Rect};
+use ggez::graphics::{rectangle, set_color, Color, DrawMode, Rect};
 
 impl Drawable for RectDrawable {
     fn draw(&self, ctx: &mut Context, transform: &Transform) -> GameResult<()> {
