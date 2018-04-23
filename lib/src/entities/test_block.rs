@@ -1,6 +1,5 @@
 use collision::collision_handling::{CollisionHandler, CollisionLayer};
 use components::collider::Collider;
-use components::moving::{GravityAffected, Moving};
 use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
@@ -10,19 +9,21 @@ use ncollide::shape::{Cuboid2, ShapeHandle2};
 use ncollide::world::{CollisionObjectHandle, GeometricQueryType};
 use specs::{Entity, World};
 
-pub struct Player {
+pub struct TestBlock {
 	entity: Option<Entity>,
 }
 
-impl Player {
+impl TestBlock {
 	pub fn new() -> Self {
-		Player { entity: None }
+		TestBlock {
+			entity: None,
+		}
 	}
 }
 
-impl GameEntity for Player {
+impl GameEntity for TestBlock {
 	fn add_to_world(&mut self, world: &mut World) {
-		let isometry: Isometry2<f32> = Isometry2::new(Vector2::new(100., 100.), 0.);
+		let isometry: Isometry2<f32> = Isometry2::new(Vector2::new(100., 400.), 0.);
 
 		let width: f32 = 32.;
 		let height: f32 = 32.;
@@ -52,9 +53,7 @@ impl GameEntity for Player {
 				isometry,
 				Point2::new(width, height),
 			))
-			.with(RectDrawable::new(Color::new(0., 1., 0., 1.)))
-			.with(Moving::new())
-			.with(GravityAffected::new())
+			.with(RectDrawable::new(Color::new(1., 0., 0., 1.)))
 			.with(Collider::new(collision_object_handle.unwrap()))
 			.build();
 

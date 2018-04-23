@@ -7,9 +7,9 @@ use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
 use ggez::Context;
-use ncollide::world::{CollisionGroups, CollisionWorld2};
 use resources::delta_time::DeltaTime;
 use specs::{Dispatcher, DispatcherBuilder, RunNow, World};
+use systems::sys_colliding::SysCollide;
 use systems::sys_moving::{SysMoving, SysMovingGravity};
 use systems::sys_render::SysRender;
 
@@ -40,12 +40,14 @@ impl<'a, 'b> GameWorld<'a, 'b> {
 		// Creates the systems
 		let sys_moving_gravity = SysMovingGravity::new();
 		let sys_moving = SysMoving {};
+		let sys_moving_collide = SysCollide {};
 
 		// Creates the dispatcher, registering the systems
 		let logic_dispatcher: Dispatcher = DispatcherBuilder::new()
 			.add(sys_moving_gravity, "sys_moving_gravity", &[])
 			// TODO: Add sys_moving_collision
 			.add(sys_moving, "sys_moving", &["sys_moving_gravity"])
+			.add(sys_moving_collide, "sys_moving_colliding", &["sys_moving"])
 			.build();
 
 		// Creates the actual GameWorld

@@ -10,7 +10,7 @@ pub struct SysMoving {}
 impl<'a> System<'a> for SysMoving {
 	type SystemData = (WriteStorage<'a, Transform>, ReadStorage<'a, Moving>);
 
-	// Applique le système permettant de changer les composants transform des objets qui bougent
+	// Applies the system to change transform components from moving objects
 	fn run(&mut self, (mut transform, moving): Self::SystemData) {
 		for (tr, mov) in (&mut transform, &moving).join() {
 			// Change the position of the transform

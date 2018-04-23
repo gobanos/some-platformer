@@ -12,6 +12,7 @@ use ggez::event::{Keycode, Mod};
 use ggez::graphics::{Color, DrawMode, Rect};
 use some_platformer_lib::{bytes, futures, tokio};
 use some_platformer_lib::entities::player::Player;
+use some_platformer_lib::entities::test_block::TestBlock;
 use some_platformer_lib::Map;
 use some_platformer_lib::sync::codec::Lines;
 use some_platformer_lib::world::gameworld::GameWorld;
@@ -183,6 +184,9 @@ fn main() {
 	// TODO: Remove player being instantiated here ...
 	let mut player: Player = Player::new();
 	game_world.add_game_entity(&mut player);
+
+	let mut test_block: TestBlock = TestBlock::new();
+	game_world.add_game_entity(&mut test_block);
 
 	// sync to game uses sync channel
 	let (sync_sender, game_receiver) = smpsc::channel();
