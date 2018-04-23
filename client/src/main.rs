@@ -2,7 +2,10 @@ extern crate flexi_logger;
 extern crate ggez;
 #[macro_use]
 extern crate log;
-extern crate some_platformer_lib;
+pub extern crate some_platformer_lib;
+
+pub use some_platformer_lib as lib;
+use lib::sync::codec::Lines;
 
 use bytes::{BufMut, Bytes};
 use flexi_logger::Logger;
@@ -16,6 +19,8 @@ use some_platformer_lib::entities::test_block::TestBlock;
 use some_platformer_lib::Map;
 use some_platformer_lib::sync::codec::Lines;
 use some_platformer_lib::world::gameworld::GameWorld;
+use lib::entities::player::player::Player;
+use lib::Map;
 use std::{env, path};
 use std::sync::mpsc as smpsc;
 use std::thread;
@@ -23,17 +28,41 @@ use tokio::io;
 use tokio::net::TcpStream;
 use tokio::prelude::*;
 
-/// Shorthand for the transmit half of the message channel
-type ATx = ampsc::UnboundedSender<Bytes>;
+use lib::sync::message;
 
-/// Shorthand for the receive half of the message channel
-type ARx = ampsc::UnboundedReceiver<Bytes>;
+use ggez::event::{Keycode, Mod};
 
-/// Shorthand for the transmit half of the message channel
-type STx = smpsc::Sender<Bytes>;
+use lib::tokio::io;
 
-/// Shorthand for the receive half of the message channel
-type SRx = smpsc::Receiver<Bytes>;
+use std::thread;
+
+use lib::futures::sync::mpsc as ampsc;
+use std::sync::mpsc as smpsc;
+
+use std::time::SystemTime;
+
+use lib::tokio::net::TcpStream;
+use lib::tokio::prelude::*;
+
+mod gameworld;
+use gameworld::GameWorld;
+
+mod sys_render;
+mod drawable;
+
+/// Shorthand for the transmit half of the game2sync channel
+type ATx = ampsc::UnboundedSender<message::Client>;
+
+/// Shorthand for the receive half of the game2sync channel
+type ARx = ampsc::UnboundedReceiver<message::Client>;
+
+/// Shorthand for the transmit half of the sync2game channel
+type STx = smpsc::Sender<message::Server>;
+
+/// Shorthand for the receive half of the sync2game channel
+type SRx = smpsc::Receiver<message::Server>;
+
+type Codec = Lines<message::Client, message::Server>;
 
 struct MainState<'a, 'b> {
 	map: Map,
@@ -43,11 +72,11 @@ struct MainState<'a, 'b> {
 }
 
 impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
-	fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
-		// Poll sync messages
-		while let Ok(msg) = self.rx.try_recv() {
-			println!("game got message {:?}", msg);
-		}
+    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
+        // Poll sync messages
+        while let Ok(msg) = self.rx.try_recv() {
+            debug!("game got message {:?}", msg);
+        }
 
 		self.world.update();
 		Ok(())
@@ -56,17 +85,17 @@ impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
 	fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
 		graphics::clear(ctx);
 
-		// TODO: Create a `TileRenderer` component, handle the map elsewhere :)
-		// draw map
-		graphics::set_color(ctx, Color::from_rgb(255, 0, 0))?;
-		for (&(x, y), _) in &self.map.elements {
-			graphics::rectangle(
-				ctx,
-				DrawMode::Fill,
-				// draw for -10 to 10 -> 40px per block
-				Rect::new((x + 10) as f32 * 40.0, (14 - y) as f32 * 40.0, 40.0, 40.0),
-			)?;
-		}
+        // TODO: Create a `TileRenderer` component, handle the map elsewhere :)
+        // draw map
+        graphics::set_color(ctx, Color::from_rgb(255, 0, 0))?;
+        for &(x, y) in self.map.elements.keys() {
+            graphics::rectangle(
+                ctx,
+                DrawMode::Fill,
+                // draw for -10 to 10 -> 40px per block
+                Rect::new((x + 10) as f32 * 40.0, (14 - y) as f32 * 40.0, 40.0, 40.0),
+            )?;
+        }
 
 		// draws the RenderSystem
 		self.world.draw(ctx);
@@ -75,20 +104,23 @@ impl<'a, 'b> ggez::event::EventHandler for MainState<'a, 'b> {
 		Ok(())
 	}
 
-	/// A keyboard button was pressed.
-	fn key_down_event(&mut self, ctx: &mut Context, keycode: Keycode, _keymod: Mod, _repeat: bool) {
-		match keycode {
-			Keycode::Escape => ctx.quit().expect("Should never fail"),
-			Keycode::Return => self.tx.unbounded_send(Bytes::from("SPAWN\r\n")).unwrap(),
-			_ => (),
-		}
-	}
+    /// A keyboard button was pressed.
+    fn key_down_event(&mut self, ctx: &mut Context, keycode: Keycode, _keymod: Mod, _repeat: bool) {
+        match keycode {
+            Keycode::Escape => ctx.quit().expect("Should never fail"),
+            Keycode::Return => self.tx.unbounded_send(message::Client::Test).unwrap(),
+            Keycode::Space => self.tx
+                .unbounded_send(message::Client::Ping(SystemTime::now()))
+                .unwrap(),
+            _ => (),
+        }
+    }
 }
 
 /// A future that processes the broadcast logic for a connection
 struct Peer {
-	/// The TCP socket wrapped with the `Lines` codec.
-	lines: Lines,
+    /// The TCP socket wrapped with the `Lines` codec.
+    lines: Codec,
 
 	/// Send half of the message channel
 	///
@@ -103,9 +135,9 @@ struct Peer {
 }
 
 impl Peer {
-	fn new(lines: Lines, tx: STx, rx: ARx) -> Self {
-		Peer { lines, tx, rx }
-	}
+    fn new(lines: Codec, tx: STx, rx: ARx) -> Self {
+        Peer { lines, tx, rx }
+    }
 }
 
 impl Future for Peer {
@@ -115,42 +147,45 @@ impl Future for Peer {
 	fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
 		// Receive all messages from peers.
 
-		// Polling an `UnboundedReceiver` cannot fail, so `unwrap`
-		// here is safe.
-		while let Async::Ready(Some(v)) = self.rx.poll().unwrap() {
-			// Buffer the line. Once all lines are buffered,
-			// they will be flushed to the socket (right
-			// below).
-			self.lines.buffer(&v);
-		}
+        // Polling an `UnboundedReceiver` cannot fail, so `unwrap`
+        // here is safe.
+        while let Async::Ready(Some(v)) = self.rx.poll().unwrap() {
+            // Buffer the line. Once all lines are buffered,
+            // they will be flushed to the socket (right
+            // below).
+            self.lines.buffer(&v)?;
+        }
 
 		// Flush the write buffer to the socket
 		let _ = self.lines.poll_flush()?;
 
-		// Read new lines from the socket
-		while let Async::Ready(line) = self.lines.poll()? {
-			println!("Received line {:?}", line);
+        // Read new lines from the socket
+        while let Async::Ready(line) = self.lines.poll()? {
+            debug!("Received line {:?}", line);
 
-			if let Some(message) = line {
-				// Append the peer's name to the front of the line:
-				let mut line = message.clone();
-				line.put("\r\n");
+            if let Some(message) = line {
+                if let message::Server::Pong { client, server } = message {
+                    let now = SystemTime::now();
+                    let client2server =
+                        server.duration_since(client).unwrap().subsec_nanos() as f32 / 1_000_000.0;
+                    let server2client =
+                        now.duration_since(server).unwrap().subsec_nanos() as f32 / 1_000_000.0;
+                    let client2client =
+                        now.duration_since(client).unwrap().subsec_nanos() as f32 / 1_000_000.0;
 
-				// We're using `Bytes`, which allows zero-copy clones
-				// (by storing the data in an Arc internally)?
-				//
-				// However, before cloning, we must freeze the data.
-				// This converts it from mutable -> immutable?
-				// allowing zero-copy cloning?
-				let line = line.freeze();
-
-				self.tx.send(line).unwrap();
-			} else {
-				// EOF was reached. The remote client has disconnected.
-				// There is nothing more to do.
-				return Ok(Async::Ready(()));
-			}
-		}
+                    debug!("SYNC:");
+                    debug!("\t- CLIENT -> SERVER : {:0.2}ms", client2server);
+                    debug!("\t- SERVER -> CLIENT : {:0.2}ms", server2client);
+                    debug!("\t- CLIENT -> SERVER -> CLIENT : {:0.2}ms", client2client);
+                } else {
+                    self.tx.send(message).unwrap();
+                }
+            } else {
+                // EOF was reached. The remote client has disconnected.
+                // There is nothing more to do.
+                return Ok(Async::Ready(()));
+            }
+        }
 
 		// As always, it is important to not just return `NotReady`
 		// without ensuring an inner future also returned `NotReady`.
@@ -162,9 +197,9 @@ impl Future for Peer {
 }
 
 fn main() {
-	Logger::with_env_or_str("some_platformer=warn")
-		.start()
-		.unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
+    Logger::with_env_or_str("some_platformer_lib=debug,some_platformer_client=debug")
+        .start()
+        .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
 
 	let c = conf::Conf::new();
 	let ctx = &mut Context::load_from_conf("some_platformer", "gobanos", c).unwrap();
@@ -181,9 +216,7 @@ fn main() {
 
 	let mut game_world: GameWorld = GameWorld::new();
 
-	// TODO: Remove player being instantiated here ...
-	let mut player: Player = Player::new();
-	game_world.add_game_entity(&mut player);
+    game_world.add_game_entity(Player::default());
 
 	let mut test_block: TestBlock = TestBlock::new();
 	game_world.add_game_entity(&mut test_block);
@@ -196,12 +229,12 @@ fn main() {
 
 	thread::spawn(move || sync(sync_sender, sync_receiver));
 
-	let state = &mut MainState {
-		map: some_platformer_lib::Map::default(),
-		world: game_world,
-		tx: game_sender,
-		rx: game_receiver,
-	};
+    let state = &mut MainState {
+        map: lib::Map::default(),
+        world: game_world,
+        tx: game_sender,
+        rx: game_receiver,
+    };
 
 	event::run(ctx, state).unwrap();
 }
@@ -217,18 +250,18 @@ fn sync(sender: STx, receiver: ARx) {
 		Ok(())
 	});
 
-	tokio::run(stream);
+    lib::tokio::run(stream);
 }
 
 fn process(socket: TcpStream, tx: STx, rx: ARx) {
-	// Wrap the socket with the `Lines` codec that we wrote above
-	let lines = Lines::new(socket);
+    // Wrap the socket with the `Lines` codec that we wrote above
+    let lines = Codec::new(socket);
 
 	let connection = Peer::new(lines, tx, rx).map_err(|err| {
 		error!("failed to read line: {:?}", err);
 		()
 	});
 
-	// Spawn the task
-	tokio::spawn(connection);
+    // Spawn the task
+    lib::tokio::spawn(connection);
 }

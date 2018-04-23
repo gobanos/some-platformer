@@ -1,22 +1,16 @@
-extern crate ncollide;
-
-use collision::collision_handling::CollisionHandler;
-use components::collider::Collider;
 use components::moving::{GravityAffected, Moving};
 use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
-use ggez::Context;
 use resources::delta_time::DeltaTime;
 use specs::{Dispatcher, DispatcherBuilder, RunNow, World};
 use systems::sys_colliding::SysCollide;
 use systems::sys_moving::{SysMoving, SysMovingGravity};
-use systems::sys_render::SysRender;
 
 // The basic struct of the game. Contains everything to simulate an instance of the game.
 pub struct GameWorld<'a, 'b> {
 	// SPECS's world
-	entity_world: World,
+	pub entity_world: World,
 	// The dispatcher that contains all the logic systems of the game
 	logic_dispatcher: Dispatcher<'a, 'b>,
 }
@@ -80,7 +74,7 @@ impl<'a, 'b> GameWorld<'a, 'b> {
 		//present(ctx);
 	}
 
-	pub fn add_game_entity<T: GameEntity>(&mut self, entity: &mut T) {
+	pub fn add_game_entity<T: GameEntity>(&mut self, entity: T) {
 		entity.add_to_world(&mut self.entity_world);
 	}
 }

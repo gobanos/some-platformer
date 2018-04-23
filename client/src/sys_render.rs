@@ -1,7 +1,9 @@
-use components::rect_drawable::RectDrawable;
-use components::transform::Transform;
+use lib::components::rect_drawable::RectDrawable;
+use lib::components::transform::Transform;
+use lib::specs::{Join, ReadStorage, System};
+
 use ggez::Context;
-use specs::{Join, ReadStorage, System};
+use drawable::Drawable;
 
 // The SysRender system draws all the RectDrawables with their Transforms on the screen
 pub struct SysRender<'c> {

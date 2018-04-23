@@ -1,8 +1,9 @@
-
-target/*
+/target/*
+/lib/target/
+/client/target/
+/server/target/
 **/*.rs.bk
 /.idea/*
 /client/SDL2.*
 /client/target/*
 /server/target/*
-

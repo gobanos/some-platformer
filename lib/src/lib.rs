@@ -7,7 +7,19 @@ pub extern crate nalgebra;
 pub extern crate ncollide;
 pub extern crate specs;
 pub extern crate time;
+#[macro_use]
+pub extern crate futures;
+pub extern crate bytes;
 pub extern crate tokio;
+
+#[macro_use]
+extern crate serde_derive;
+
+extern crate serde;
+extern crate serde_json;
+
+#[macro_use]
+extern crate log;
 
 use std::collections::HashMap;
 
@@ -18,6 +30,7 @@ pub mod systems;
 pub mod resources;
 pub mod sync;
 pub mod collision;
+pub mod types;
 
 // TODO: move this out of lib.rs
 const DEBUG_MAP: &[(i32, i32)] = &[
