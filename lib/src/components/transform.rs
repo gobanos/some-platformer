@@ -1,5 +1,3 @@
-use nalgebra::Point2;
-use ggez::graphics::Rect;
 use nalgebra::{Isometry2, Point2, Vector2};
 use specs::{Component, VecStorage};
 use types::Rect;
@@ -11,9 +9,16 @@ pub struct Transform {
 }
 
 impl Transform {
-	pub fn new(isometry: Isometry2<f32>, size: Point2<f32>) -> Self {
+	pub fn new_with_isometry(isometry: Isometry2<f32>, size: Point2<f32>) -> Self {
 		Transform {
 			isometry,
+			size,
+		}
+	}
+
+	pub fn new(position: Vector2<f32>, size: Point2<f32>) -> Self {
+		Transform {
+			isometry: Isometry2::new(position, 0.),
 			size,
 		}
 	}

@@ -1,25 +1,18 @@
 pub extern crate bytes;
 #[macro_use]
 pub extern crate futures;
-extern crate ggez;
+#[macro_use]
+extern crate log;
 // RE-EXPORTS
 pub extern crate nalgebra;
 pub extern crate ncollide;
-pub extern crate specs;
-pub extern crate time;
-#[macro_use]
-pub extern crate futures;
-pub extern crate bytes;
-pub extern crate tokio;
-
+extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-
-extern crate serde;
 extern crate serde_json;
-
-#[macro_use]
-extern crate log;
+pub extern crate specs;
+pub extern crate time;
+pub extern crate tokio;
 
 use std::collections::HashMap;
 

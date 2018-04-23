@@ -1,9 +1,11 @@
+use collision::collision_handling::CollisionHandler;
+use components::collider::Collider;
 use components::moving::{GravityAffected, Moving};
 use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
 use resources::delta_time::DeltaTime;
-use specs::{Dispatcher, DispatcherBuilder, RunNow, World};
+use specs::{Dispatcher, DispatcherBuilder, World};
 use systems::sys_colliding::SysCollide;
 use systems::sys_moving::{SysMoving, SysMovingGravity};
 
@@ -59,19 +61,6 @@ impl<'a, 'b> GameWorld<'a, 'b> {
 
 		// Updates the game's logic
 		self.logic_dispatcher.dispatch(&self.entity_world.res);
-	}
-
-	// Ticks the game world
-	pub fn draw(&mut self, ctx: &mut Context) {
-		// Creates the drawing dispatcher if we're not launching the game in headless mode
-		// FIXME: Handle this better ? There has to be a way to avoid re-creating every loop
-
-		//clear(ctx);
-		{
-			let mut render_system: SysRender = SysRender::new(ctx);
-			render_system.run_now(&self.entity_world.res);
-		}
-		//present(ctx);
 	}
 
 	pub fn add_game_entity<T: GameEntity>(&mut self, entity: T) {
