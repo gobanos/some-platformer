@@ -4,12 +4,7 @@ version = "0.1.0"
 authors = ["Grégory OBANOS <gregory.obanos@gmail.com>"]
 
 [dependencies]
-tokio = "*"
-tokio-io = "*"
-futures = "*"
-bytes = "*"
-
-log = "*"
-flexi_logger = "*"
+log = "0.4.1"
+flexi_logger = "0.8.1"
 
 some_platformer_lib = { path = "../lib" }
