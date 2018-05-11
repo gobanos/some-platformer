@@ -41,12 +41,7 @@ impl GameEntity for Player {
     fn add_to_world(self, world: &mut World) -> Self::Entity {
         let entity: Entity = world
             .create_entity()
-            // TODO: remove Hardcoded position
-            .with(Transform::new(
-                self.position,
-                self.size,
-                0.,
-            ))
+            .with(Transform::new(self.position, self.size, 0.))
             .with(RectDrawable::new(self.color))
             .with(Moving::new())
             .with(GravityAffected::new())

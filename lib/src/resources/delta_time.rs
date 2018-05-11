@@ -19,10 +19,9 @@ impl DeltaTime {
 
     /// Updates the DeltaTime resource
     pub fn update(&mut self) {
-        // FIXME: Correct time handling @gobanos ?
         let new_time: u64 = precise_time_ns();
         self.delta_ns = new_time - self.old_time;
-        self.delta_ms = 0.02;
+        self.delta_ms = self.delta_ns as f32 / 1000.0;
     }
 }
 
