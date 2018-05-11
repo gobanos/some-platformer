@@ -1,5 +1,5 @@
-use sync::C2GReceiver;
 use sync::state::StateHandle;
+use sync::C2GReceiver;
 
 use std::time::Duration;
 

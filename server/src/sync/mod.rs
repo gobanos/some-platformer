@@ -1,11 +1,11 @@
 pub mod peer;
 pub mod state;
 
-use std::sync::mpsc::{Receiver, Sender};
 use std::net::SocketAddr;
+use std::sync::mpsc::{Receiver, Sender};
 
-use lib::sync::message::{Client, Server};
 use lib::sync::codec::Lines;
+use lib::sync::message::{Client, Server};
 
 use lib::futures::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 

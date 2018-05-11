@@ -5,17 +5,17 @@ extern crate flexi_logger;
 extern crate log;
 
 mod sync;
-use sync::{C2GSender, Codec};
 use sync::peer::Peer;
 use sync::state::{State, StateHandle};
+use sync::{C2GSender, Codec};
 
 mod game;
 use game::Game;
 
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
-use std::time::{Duration, SystemTime};
+use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::{Duration, SystemTime};
 
 use lib::tokio::net::{TcpListener, TcpStream};
 use lib::tokio::prelude::*;

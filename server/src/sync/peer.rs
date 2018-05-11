@@ -1,7 +1,7 @@
 use lib::sync::message::{Client, Server};
 
-use std::time::SystemTime;
 use std::net::SocketAddr;
+use std::time::SystemTime;
 
 use lib::futures::sync::mpsc;
 
