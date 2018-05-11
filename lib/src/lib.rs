@@ -18,13 +18,13 @@ extern crate log;
 
 use std::collections::HashMap;
 
-pub mod world;
-pub mod entities;
 pub mod components;
-pub mod systems;
+pub mod entities;
 pub mod resources;
 pub mod sync;
+pub mod systems;
 pub mod types;
+pub mod world;
 
 // TODO: move this out of lib.rs
 const DEBUG_MAP: &[(i32, i32)] = &[

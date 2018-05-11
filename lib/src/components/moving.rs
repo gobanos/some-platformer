@@ -22,11 +22,18 @@ impl Moving {
     }
 }
 
+impl Default for Moving {
+    fn default() -> Self {
+        Moving::new()
+    }
+}
+
 impl Component for Moving {
     type Storage = VecStorage<Self>;
 }
 
 /// A component that makes an entity affected by the gravity
+#[derive(Default)]
 pub struct GravityAffected {}
 
 impl GravityAffected {

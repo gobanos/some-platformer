@@ -25,3 +25,9 @@ impl DeltaTime {
         self.delta_ms = 0.02;
     }
 }
+
+impl Default for DeltaTime {
+    fn default() -> Self {
+        DeltaTime::new()
+    }
+}

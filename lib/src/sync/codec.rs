@@ -10,8 +10,8 @@ use bytes::{BufMut, BytesMut};
 
 use std::marker::PhantomData;
 
-use serde::Serialize;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 /// The codec allowing framed communication
 pub struct Lines<S: Serialize, D: DeserializeOwned> {

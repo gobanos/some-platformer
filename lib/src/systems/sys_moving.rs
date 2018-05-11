@@ -38,6 +38,12 @@ impl SysMovingGravity {
     }
 }
 
+impl Default for SysMovingGravity {
+    fn default() -> Self {
+        SysMovingGravity::new()
+    }
+}
+
 impl<'a> System<'a> for SysMovingGravity {
     type SystemData = (
         WriteStorage<'a, Moving>,

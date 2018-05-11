@@ -58,3 +58,9 @@ impl<'a, 'b> GameWorld<'a, 'b> {
         entity.add_to_world(&mut self.entity_world);
     }
 }
+
+impl<'a, 'b> Default for GameWorld<'a, 'b> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
