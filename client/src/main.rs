@@ -4,13 +4,13 @@ extern crate ggez;
 extern crate log;
 pub extern crate some_platformer_lib;
 
-pub use some_platformer_lib as lib;
 use lib::sync::codec::Lines;
+pub use some_platformer_lib as lib;
 
 use flexi_logger::Logger;
-use ggez::{conf, event, graphics, Context, GameResult};
 use ggez::graphics::{Color, DrawMode, Rect};
-use lib::entities::player::player::Player;
+use ggez::{conf, event, graphics, Context, GameResult};
+use lib::entities::player::Player;
 use lib::Map;
 use std::{env, path};
 
@@ -33,8 +33,8 @@ use lib::tokio::prelude::*;
 mod gameworld;
 use gameworld::GameWorld;
 
-mod sys_render;
 mod drawable;
+mod sys_render;
 
 /// Shorthand for the transmit half of the game2sync channel
 type ATx = ampsc::UnboundedSender<message::Client>;

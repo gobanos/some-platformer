@@ -1,6 +1,6 @@
-use lib::world::gameworld::GameWorld as GW;
-use lib::specs::RunNow;
 use ggez::Context;
+use lib::specs::RunNow;
+use lib::world::gameworld::GameWorld as GW;
 use sys_render::SysRender;
 
 use std::ops::{Deref, DerefMut};
