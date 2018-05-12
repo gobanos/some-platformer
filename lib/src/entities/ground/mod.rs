@@ -1,9 +1,8 @@
 use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
-use nalgebra::Point2;
+use nalgebra::{Point2, Vector2};
 use specs::{Entity, World};
-
 use types::Color;
 
 pub struct GroundEntity(Entity);
@@ -40,7 +39,10 @@ impl GameEntity for Ground {
     fn add_to_world(self, world: &mut World) -> Self::Entity {
         let entity: Entity = world
             .create_entity()
-            .with(Transform::new(self.position, self.size, 0.))
+            .with(Transform::new(
+                Vector2::new(self.position.x, self.position.y),
+                self.size,
+            ))
             .with(RectDrawable::new(self.color))
             .build();
 

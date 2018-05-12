@@ -35,6 +35,12 @@ impl CollisionHandler {
             self.collision_groups.insert(layer, collision_group);
         }
 
-        return collision_group;
+        collision_group
+    }
+}
+
+impl Default for CollisionHandler {
+    fn default() -> Self {
+        Self::new()
     }
 }

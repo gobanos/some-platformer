@@ -16,16 +16,14 @@ pub extern crate tokio;
 
 use std::collections::HashMap;
 
-pub mod world;
-pub mod entities;
+pub mod collision;
 pub mod components;
-pub mod systems;
+pub mod entities;
 pub mod resources;
 pub mod sync;
-#[macro_use]
-extern crate serde_derive;
-pub mod collision;
+pub mod systems;
 pub mod types;
+pub mod world;
 
 // TODO: move this out of lib.rs
 const DEBUG_MAP: &[(i32, i32)] = &[
