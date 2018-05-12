@@ -1,9 +1,12 @@
+use collision::collision_handling::CollisionHandler;
+use components::collider::Collider;
 use components::moving::{GravityAffected, Moving};
 use components::rect_drawable::RectDrawable;
 use components::transform::Transform;
 use entities::game_entity::GameEntity;
 use resources::delta_time::DeltaTime;
 use specs::{Dispatcher, DispatcherBuilder, World};
+use systems::sys_colliding::SysCollide;
 use systems::sys_moving::{SysMoving, SysMovingGravity};
 
 // The basic struct of the game. Contains everything to simulate an instance of the game.
@@ -23,18 +26,24 @@ impl<'a, 'b> GameWorld<'a, 'b> {
         world.register::<RectDrawable>();
         world.register::<Moving>();
         world.register::<GravityAffected>();
+        world.register::<Collider>();
+
+        let collision_handler: CollisionHandler = CollisionHandler::new();
 
         world.add_resource(DeltaTime::new());
+        world.add_resource(collision_handler);
 
         // Creates the systems
         let sys_moving_gravity = SysMovingGravity::new();
         let sys_moving = SysMoving {};
+        let sys_moving_collide = SysCollide {};
 
         // Creates the dispatcher, registering the systems
         let logic_dispatcher: Dispatcher = DispatcherBuilder::new()
 			.add(sys_moving_gravity, "sys_moving_gravity", &[])
 			// TODO: Add sys_moving_collision
 			.add(sys_moving, "sys_moving", &["sys_moving_gravity"])
+			.add(sys_moving_collide, "sys_moving_colliding", &["sys_moving"])
 			.build();
 
         // Creates the actual GameWorld

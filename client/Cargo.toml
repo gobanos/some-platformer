@@ -4,8 +4,8 @@ version = "0.1.0"
 authors = ["Gregory Obanos <gregory.obanos@gmail.com>", "Olivier Pinon <oliv.pinon@gmail.com"]
 
 [dependencies]
-ggez = "*"
-log = "*"
-flexi_logger = "*"
+ggez = "0.4.2"
+log = "0.4.1"
+flexi_logger = "0.8.1"
 
 some_platformer_lib = { path = "../lib" }

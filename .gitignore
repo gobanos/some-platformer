@@ -1,6 +1,4 @@
-
-/lib/target/
-/client/target/
-/server/target/
+target/
 **/*.rs.bk
-/.idea/*
+.idea/
+/client/SDL2.*

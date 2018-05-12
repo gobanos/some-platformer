@@ -1,9 +1,8 @@
 use ggez::Context;
 use lib::specs::RunNow;
 use lib::world::gameworld::GameWorld as GW;
-use sys_render::SysRender;
-
 use std::ops::{Deref, DerefMut};
+use sys_render::SysRender;
 
 pub struct GameWorld<'a, 'b>(GW<'a, 'b>);
 

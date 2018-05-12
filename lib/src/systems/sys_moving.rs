@@ -1,6 +1,6 @@
 use components::moving::{GravityAffected, Moving};
 use components::transform::Transform;
-use nalgebra::Vector2;
+use nalgebra::{Translation2, Vector2};
 use resources::delta_time::DeltaTime;
 use specs::{Fetch, Join, ReadStorage, System, WriteStorage};
 
@@ -10,11 +10,12 @@ pub struct SysMoving {}
 impl<'a> System<'a> for SysMoving {
     type SystemData = (WriteStorage<'a, Transform>, ReadStorage<'a, Moving>);
 
+    // Applies the system to change transform components from moving objects
     fn run(&mut self, (mut transform, moving): Self::SystemData) {
         for (tr, mov) in (&mut transform, &moving).join() {
             // Change the position of the transform
-            tr.position.x += mov.velocity.vector.x;
-            tr.position.y += mov.velocity.vector.y;
+            tr.isometry
+                .append_translation_mut(&Translation2::from_vector(mov.velocity.vector));
         }
     }
 }

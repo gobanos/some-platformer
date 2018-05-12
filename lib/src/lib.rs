@@ -1,30 +1,31 @@
-// RE-EXPORTS
-pub extern crate nalgebra;
-pub extern crate specs;
-pub extern crate time;
+pub extern crate bytes;
 #[macro_use]
 pub extern crate futures;
-pub extern crate bytes;
-pub extern crate tokio;
-
-#[macro_use]
-extern crate serde_derive;
-
-extern crate serde;
-extern crate serde_json;
-
 #[macro_use]
 extern crate log;
+// RE-EXPORTS
+pub extern crate nalgebra;
+pub extern crate ncollide;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+pub extern crate specs;
+pub extern crate time;
+pub extern crate tokio;
 
 use std::collections::HashMap;
 
-pub mod components;
+pub mod world;
 pub mod entities;
+pub mod components;
+pub mod systems;
 pub mod resources;
 pub mod sync;
-pub mod systems;
+#[macro_use]
+extern crate serde_derive;
+pub mod collision;
 pub mod types;
-pub mod world;
 
 // TODO: move this out of lib.rs
 const DEBUG_MAP: &[(i32, i32)] = &[
